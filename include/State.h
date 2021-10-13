@@ -15,7 +15,8 @@ class State{
 
     public:
         State(unsigned int i);
-        auto & get_birds(){return _birds;}
+        auto & get_birds() const {return _birds;}
+        auto size() const {return _birds.size();}
         void update(double velocity, double angle, unsigned int i);
 };
 

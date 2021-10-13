@@ -1,16 +1,18 @@
 #include "Observable.h"
 
 Observable::Observable(): 
-    _o{std::make_shared<unsigned int []>(5)},
-    _sectors{5}
+    _o{std::vector<unsigned int>(5)},
+    _sectors{5},
+    _max_val{1}
     {}
 
-Observable::Observable(unsigned int size): 
-    _o{std::make_shared<unsigned int []>(size)},
-    _sectors{size}
+Observable::Observable(unsigned int sectors): 
+    _o{std::make_shared<unsigned int []>(sectors)},
+    _sectors{size},
+    _max_val{1}
     {}
 
-std::shared_ptr<unsigned int []> Observable::get_sectors(){
+std::vector<unsigned int> get_obs(){
     return _o;
 }
 

@@ -9,6 +9,8 @@ class Policy{
     private:
 
         
+        bool _is_deterministic;
+
     public:
         Action decide(Observable &o);
 

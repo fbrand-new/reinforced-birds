@@ -1,20 +1,21 @@
 #ifndef __OBSERVABLE__
 #define __OBSERVABLE__
 
-#include <memory>
+#include <vector>
 #include <fstream>
 
 class Observable{
 
     private:
-        std::shared_ptr<unsigned int []> _o;
+        std::vector<unsigned int> _o;
         std::size_t _sectors;
+        std::size_t _max_val;
 
     public:
         Observable();
-        Observable(unsigned int size);
+        Observable(size_t sectors);
 
-        std::shared_ptr<unsigned int []> get_sectors();
+        std::vector<unsigned int> get_obs();
         std::size_t get_sectors_num();
 
         void empty_sector(unsigned int i);

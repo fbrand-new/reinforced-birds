@@ -25,9 +25,9 @@ class Environment
         Environment(unsigned int birds_num);
 
         //p(s'|a,s): One step dynamics. We are going to suppose to be in a deterministic settings, so s' = f(a,s)
-        State dynamics(Action a, const State &s);
+        State dynamics(std::vector<Action> a, State& s);
         State& get_state(){return _state;}
-        double reward(Action &a, State &s); //TODO
+        double reward(std::vector<Action> &a, State &s); //TODO
 
 };
 

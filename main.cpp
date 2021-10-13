@@ -2,6 +2,7 @@
 #include "Observable.h"
 #include "Agent.h"
 #include "Environment.h"
+#include "Reward.h"
 #include <memory>
 #include <algorithm>
 
@@ -23,7 +24,7 @@ Executions:
 // Hardcoded policies
 
 // random walk policy
-Action random_walk();
+// Action random_walk();
 
 // ----------------------------------- ---
 
@@ -50,8 +51,8 @@ int main(){
 
     std::shared_ptr<State> prev_state;
     std::shared_ptr<State> next_state;
-    std::unique_ptr<Action> a;
-    std::unique_ptr<double> r;
+    std::vector<Action> a;
+    std::vector<Reward> r;
 
     std::ofstream traj_file;
     traj_file.open("first_trajectory.csv");
@@ -62,16 +63,16 @@ int main(){
 
     std::cout << "Bird initialized in: " << prev_state << std::endl;
 
-    //We should also loop an multiple episodes
+    //We should also loop on multiple episodes
     for(std::size_t t = 0; t<episode_length; ++t){
         traj_file << prev_state;
         
         //All agents get an observation based on the current state and return an action
         for(std::size_t i = 0; i < agents.size(); ++i)
-            a = std::make_unique<Action>(agents[i].act(*prev_state));
+            a[i] = (agents[i].act(*prev_state));
             
-        next_state = std::make_shared<State>(env.dynamics(*a, *prev_state));
-        r = std::make_unique<double>(env.reward(*a, *prev_state));
+        next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
+        //r = std::make_unique<Reward>(env.reward(*a, *prev_state));
 
         //Learning phase
         //TODO: for TD learning
@@ -87,7 +88,7 @@ int main(){
 
 // Function definition
 
-Action random_walk(){
-    return static_cast<Action>( rand() % (static_cast<int>(Action::right)+1));
-}
+// Action random_walk(){
+//     return static_cast<Action>( rand() % (static_cast<int>(Action::right)+1));
+// }
 
