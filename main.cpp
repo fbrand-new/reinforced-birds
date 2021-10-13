@@ -31,6 +31,8 @@ Executions:
 // Main execution
 int main(){
 
+    double capture_range = 0.05;
+
     //Decide the episode length
     std::size_t episode_length = 10;
 
@@ -47,8 +49,7 @@ int main(){
     for(std::size_t i = 0; i < agents.size(); ++i ){
         agents[i].set_id(i);
     }
-    //Environment env(... velocity, max angle, etc...)
-
+    
     std::shared_ptr<State> prev_state;
     std::shared_ptr<State> next_state;
     std::vector<Action> a;
