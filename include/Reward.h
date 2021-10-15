@@ -3,6 +3,6 @@
 
 #include <vector>
 
-typedef double Reward;
+typedef std::vector<double> Reward;
 
 #endif

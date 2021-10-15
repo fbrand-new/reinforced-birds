@@ -2,6 +2,7 @@
 #define __OBSERVABLE__
 
 #include <vector>
+#include <math.h>
 #include <fstream>
 
 class Observable{
@@ -17,6 +18,7 @@ class Observable{
 
         std::vector<unsigned int> get_obs();
         std::size_t get_sectors_num();
+        std::size_t index();
 
         void empty_sector(unsigned int i);
         void non_empty_sector(unsigned int i);

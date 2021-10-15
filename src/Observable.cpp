@@ -6,18 +6,29 @@ Observable::Observable():
     _max_val{1}
     {}
 
-Observable::Observable(unsigned int sectors): 
-    _o{std::make_shared<unsigned int []>(sectors)},
-    _sectors{size},
+Observable::Observable(size_t sectors): 
+    _o{std::vector<unsigned int>(sectors)},
+    _sectors{sectors},
     _max_val{1}
     {}
 
-std::vector<unsigned int> get_obs(){
+std::vector<unsigned int> Observable::get_obs(){
     return _o;
 }
 
 std::size_t Observable::get_sectors_num(){
     return _sectors;
+}
+
+std::size_t Observable::index(){
+
+    std::size_t i = 0;
+
+    for(std::size_t k=0; k<get_sectors_num(); k++){
+        i+=_o[k]*pow(_max_val+1,k); //This transforms base _max_val+1 into a number
+    }
+
+    return i;
 }
 
 void Observable::empty_sector(unsigned int i){
@@ -30,10 +41,10 @@ void Observable::non_empty_sector(unsigned int i){
 
 std::ostream& operator <<(std::ostream & os, Observable &o){
 
-    std::shared_ptr<unsigned int []> sectors = o.get_sectors();
+    auto obs = o.get_obs();
 
     for(std::size_t i=0; i<o.get_sectors_num(); ++i){
-        os << sectors[i];
+        os << obs[i];
     }
 
     os << std::endl;

@@ -2,6 +2,7 @@
 #define __BIRD_H_
 
 #include <cstdlib>
+#include <cmath>
 //This is an entity that the environment is made of. The state of the environemnt, IN OUR CASE, is a collection
 //of these entities
 class Bird{

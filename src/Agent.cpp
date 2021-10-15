@@ -1,6 +1,14 @@
 #include "Agent.h"
 
-void Agent::obs(State &s){
+Agent::Agent():
+    _p{std::make_unique<Policy>()}
+    {}
+// Agent::Agent(std::size_t id, Policy &p):
+//     _id{id},
+//     _p{p}
+//     {}
+
+Observable Agent::obs(State &s){
 
     //TODO: clearly these should be put in the constructor
     //And be parameterizable
@@ -20,20 +28,21 @@ void Agent::obs(State &s){
             }
         }     
     }
+
+    return _o;
 }
 
-Action Agent::act(State &s){
+Action Agent::act(State &s, Observable &o){
 
-    obs(s);
-    return _p.decide(_o);
+    return _p->decide(o);
 }
 
-double Agent::relative_distance(Bird &a, Bird &b){
+double Agent::relative_distance(const Bird &a, const Bird &b){
 
     return sqrt(pow(a.get_x() - b.get_x(),2) + pow(a.get_y() - b.get_y(),2));
 }
 
-double Agent::relative_angle(Bird &a, Bird &b){
+double Agent::relative_angle(const Bird &a, const Bird &b){
 
     return atan(abs(a.get_y() - b.get_y())/abs(a.get_x() - b.get_x())) *180 /M_PI;
 }
