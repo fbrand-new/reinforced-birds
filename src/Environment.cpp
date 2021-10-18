@@ -1,22 +1,24 @@
 #include "Environment.h"
 
-Environment::Environment(unsigned int birds_num):
+Environment::Environment(std::size_t birds_num):
     _state(birds_num),
     _v0{0.1},
-    _capture_range{0.1}
+    _capture_range{0.1},
+    _steering_angle{30}
     {}
 
-Environment::Environment(std::size_t birds_num, double v0, double capture_range):
+Environment::Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle):
     _state(birds_num),
     _v0{v0},
-    _capture_range{capture_range}
+    _capture_range{capture_range},
+    _steering_angle{steering_angle}
     {}
 
 //TODO: we should pass a vector of actions, and the indexes of the affected birds!
 //
 State Environment::dynamics(std::vector<Action> a, State& s){
 
-    double alpha_new = 90*M_PI/180;
+    double alpha_new = _steering_angle*M_PI/180;
     //State new_state(s.size());
 
     for(std::size_t i=0; i<s.size(); ++i){
@@ -55,4 +57,9 @@ Reward Environment::reward(State &s){
     }
 
     return r;
+}
+
+void Environment::reset(){
+
+    _state.reset();
 }

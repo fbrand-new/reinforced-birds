@@ -9,7 +9,7 @@ class RandomWalk : public Policy{
     public:
         //Default ctor
         RandomWalk(const Policy &p);
-        RandomWalk(const std::size_t params_num);
+        RandomWalk(const std::size_t rows, const std::size_t cols);
         Action decide(Observable &o) override;
 };
 

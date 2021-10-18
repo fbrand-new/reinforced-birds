@@ -18,6 +18,7 @@ class State{
         auto & get_birds() const {return _birds;}
         auto size() const {return _birds.size();}
         void update(double velocity, double angle, unsigned int i);
+        void reset();
 };
 
 std::ofstream& operator <<(std::ofstream & os, State &s);

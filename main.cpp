@@ -5,7 +5,9 @@
 #include "Reward.h"
 #include "Policy.h"
 #include "RandomWalk.h"
+#include "Boltzmann.h"
 #include "V.h"
+#include <string>
 #include <memory>
 #include <algorithm>
 #include <Eigen/Dense>
@@ -35,12 +37,14 @@ Executions:
 // Main execution
 int main(){
 
-    double capture_range = 0.05;
+    double steering_angle = 30;
+    double capture_range = 0.2;
     constexpr double gamma = 1;
-    double alpha_w = 0.01;
-    double alpha_t = 0.01;
+    double alpha_w = 0.5;
+    double alpha_t = 0.5;
     //Decide the episode length
-    std::size_t episode_length = 100;
+    std::size_t episodes_num = 100;
+    std::size_t episode_length = 5000;
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
@@ -50,26 +54,12 @@ int main(){
     //The first one is the pursuer, the other are evaders
 
     //State initialization
-    Environment env(num_of_birds,0.2,capture_range); //How many birds
+    Environment env(num_of_birds, 0.2,capture_range, steering_angle); //How many birds
     std::vector<Agent> agents(num_of_birds);
-
-
-    //3 is the fixed number of action that we can take
-    //TODO: The Q matrix corresponds to the thetas of the policy though
-    // Eigen::MatrixXd Q(state_space_dim, 3);
-
-    // //Q matrix initialization
-    // for(std::size_t i=0; i<Q.rows(); ++i){
-    //     for(std::size_t j=0; j<Q.cols(); ++j)
-    //         Q(i,j) = rand()/RAND_MAX;
-    // }
-
-    //We will actually need a collection of V, one for each agent
-    //Eigen::VectorXd V(state_space_dim);  
 
     for(std::size_t i = 0; i < agents.size(); ++i ){
         agents[i].set_id(i);
-        agents[i].set_policy<RandomWalk>(RandomWalk(1));
+        agents[i].set_policy<Boltzmann>(Boltzmann(state_space_dim, 3));
     }
     
     std::shared_ptr<State> prev_state;
@@ -82,69 +72,72 @@ int main(){
     std::vector<double> delta(num_of_birds);
 
     std::ofstream traj_file;
-    traj_file.open("first_trajectory.csv");
-
-    //Header construction
-    for(std::size_t i=0; i<num_of_birds; ++i){
-        traj_file << "x" << i << ",y" << i;
-        if(i<num_of_birds-1) 
-            traj_file << ",";
-    }
-    traj_file << std::endl;
-
-
-    //State initialization
-    prev_state = std::make_shared<State>(env.get_state());
-    for(std::size_t i=0; i<num_of_birds; ++i)
-        prev_obs[i] = std::make_shared<Observable>(agents[i].obs(*prev_state));
-
-    std::cout << "Bird initialized in: " << *prev_state << std::endl;
 
     //We should also loop on multiple episodes
-    for(std::size_t t = 0; t<episode_length; ++t){
-        traj_file << *prev_state;
-        
-        //All agents get an observation based on the current state and return an action
-        for(std::size_t i = 0; i < agents.size(); ++i){
-            a[i] = (agents[i].act(*prev_state, *prev_obs[i]));
+    for(std::size_t ep=0; ep<episodes_num; ep++){
+
+        //State initialization
+        env.reset();
+        prev_state = std::make_shared<State>(env.get_state());
+        for(std::size_t i=0; i<num_of_birds; ++i)
+            prev_obs[i] = std::make_shared<Observable>(agents[i].obs(*prev_state));
+
+           
+        //File initialization
+        traj_file.open("trajectories/pursuer_trajectory" + std::to_string(ep) + ".csv");
+
+        //Header construction
+        for(std::size_t i=0; i<num_of_birds; ++i){
+            traj_file << "x" << i << ",y" << i;
+            if(i<num_of_birds-1) 
+                traj_file << ",";
         }
- 
-        next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
-        for(std::size_t i=0; i<num_of_birds; ++i)
-            next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
-
-        r = env.reward(*prev_state);
-
-        for(std::size_t i=0; i<num_of_birds; ++i)
-            delta[i] = r[i] + gamma*v[i][*next_obs[i]] - v[i][*prev_obs[i]];
-
-        //Learning phase
-        //V values update
-        for(std::size_t i=0; i<num_of_birds; ++i)
-            v[i][*prev_obs[i]] += alpha_w*delta[i];
-
-        //Theta values update (here comes the tricky)
-        for(std::size_t i=0; i<num_of_birds; ++i)
+        traj_file << std::endl;
 
 
-        //Check if episode is over:
-        if(r[0] == 1){
-            std::cout << "Episode finished at time " << t <<  std::endl;
-            break;
+        for(std::size_t t = 0; t<episode_length; ++t){
+            traj_file << *prev_state;
+            
+            //All agents get an observation based on the current state and return an action
+            for(std::size_t i = 0; i < agents.size(); ++i){
+                a[i] = (agents[i].act(*prev_state, *prev_obs[i]));
+            }
+    
+            next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
+            for(std::size_t i=0; i<num_of_birds; ++i)
+                next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
+
+            r = env.reward(*prev_state);
+
+            for(std::size_t i=0; i<num_of_birds; ++i)
+                delta[i] = r[i] + gamma*v[i][*next_obs[i]] - v[i][*prev_obs[i]];
+
+            //Learning phase
+            //V values update
+            for(std::size_t i=0; i<num_of_birds; ++i)
+                v[i][*prev_obs[i]] += alpha_w*delta[i];
+
+            //Theta values update (here comes the tricky)
+            agents[0].update_policy(alpha_t*delta[0]*pow(gamma,t), *prev_obs[0], a[0]);
+
+            //Check if episode is over:
+            if(r[0] == 1){
+                std::cout << "Episode " << ep << " finished at time " << t <<  std::endl;
+                break;
+            }
+
+            //State update
+            prev_state = next_state;
+
+            //Observation update
+            for(std::size_t i=0; i<num_of_birds; ++i)
+                prev_obs[i] = next_obs[i];
         }
 
-
-
-
-        //State update
-        prev_state = next_state;
-
-        //Observation update
-        for(std::size_t i=0; i<num_of_birds; ++i)
-            prev_obs[i] = next_obs[i];
+        traj_file.close();
+        //std::cout << "Episode finished at time " << episode_length <<  std::endl;
     }
 
-    std::cout << "Episode finished at time " << episode_length <<  std::endl;
 
     return 0;
 }

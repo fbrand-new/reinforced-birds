@@ -16,11 +16,15 @@ class Agent{
         Observable _o;
         //Policy * _p;
         std::unique_ptr<Policy> _p;
+        double _vision_range;
+        double _vision_angle;
 
     public:
 
         //Constructors
         Agent();
+        Agent(Policy &p);
+        Agent(double vision_range, double vision_angle);
         //Agent(std::size_t id, Policy &p);
 
         //Getters
@@ -36,9 +40,10 @@ class Agent{
 
         // Observable function definition
         Observable obs(State &s);
-
         // Take an action according to a certain policy and the current observation
         Action act(State &s, Observable &o);
+        // Update policy given an observable and action
+        void update_policy(double coeff, Observable &o, Action &a);
 
         //Utilities function
         static double relative_distance(const Bird &a, const Bird &b);

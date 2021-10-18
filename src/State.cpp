@@ -39,3 +39,9 @@ std::ostream& operator <<(std::ostream & os, State &s){
     return os;
 }
 
+void State::reset(){
+
+    for(std::size_t i=0; i< _birds.size(); ++i){
+        _birds[i].reset();
+    }
+}

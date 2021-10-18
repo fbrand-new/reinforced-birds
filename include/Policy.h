@@ -4,17 +4,18 @@
 #include "Action.h"
 #include "Observable.h"
 #include <Eigen/Dense>
+#include <cstdlib>
 
 class Policy{
 
-    private:
-        std::vector<double> _params;
+    protected:
+        Eigen::MatrixXd _params;
 
     public:
 
         //Constructors
         Policy() = default;
-        Policy(size_t params_num);
+        Policy(size_t rows, size_t cols);
         Policy(const Policy &p);
 
         //Copy assignment
@@ -28,12 +29,15 @@ class Policy{
         ~Policy(){};
 
         //Getter
-        std::vector<double> get_params() const {return _params;}
+        Eigen::MatrixXd get_params() const {return _params;}
+        double get(const std::size_t row, const std::size_t col);
+        Eigen::MatrixXd get_row(const std::size_t row);
 
         //Setter
-        void set_params(std::vector<double> pars) {_params = pars;}
+        void set_params(Eigen::MatrixXd pars) {_params = pars;}
         
         virtual Action decide(Observable &o);
+        virtual void update(double coeffs, Observable &o, Action &a);
 };
 
 #endif
