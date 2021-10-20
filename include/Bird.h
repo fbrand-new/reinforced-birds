@@ -8,17 +8,19 @@
 class Bird{
 
     private:
-        double _x{(double)rand()/RAND_MAX*5};
-        double _y{(double)rand()/RAND_MAX*5};
+        double _x{(double)rand()/RAND_MAX*10};
+        double _y{(double)rand()/RAND_MAX*10};
         double _alpha{0};
 
     public:
+
+        Bird(double x, double y, double alpha);
         double get_x() const noexcept { return _x; }
         double get_y() const noexcept { return _y; }
         double get_alpha() const noexcept { return _alpha; }
 
         void update(double velocity, double angle);
-        void reset();
+        void reset(double x, double y, double alpha);
 
 };
 

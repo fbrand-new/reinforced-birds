@@ -1,4 +1,5 @@
 #include "Boltzmann.h"
+#include <iostream>
 
 Boltzmann::Boltzmann(const Policy &p) : Policy(p)
     {}
@@ -11,7 +12,7 @@ Action Boltzmann::decide(Observable &o){
     std::size_t row = o.index();
     auto actions_pars = get_row(row);
 
-    auto den = 0;
+    double den = 0;
     for(std::size_t i=0; i<actions_pars.cols(); i++){
         den+=exp(actions_pars(0,i));
     }
@@ -34,8 +35,16 @@ void Boltzmann::update(double coeffs, Observable &o, Action &a){
     for(std::size_t c=0; c<3; c++)
         normalization += exp(_params(row,c));
 
-    double old_par = _params(row, col);
-    _params(row, col) += coeffs*(1 - exp(old_par)/normalization);
+    double policy_row_col = exp(_params(row, col))/normalization;
+
+    for(std::size_t a=0; a<3; a++){
+        if(a==col){
+            _params(row, col) += coeffs*(1 - policy_row_col);
+        } else {
+            _params(row, a) += coeffs*policy_row_col;
+        }
+    }
+
 }
 
 Action Boltzmann::sample_discrete(std::vector<double> p){

@@ -2,18 +2,16 @@
 #include <iostream>
 
 //This should initialize a random matrix with coefficients \in [0,1]
+//Let's initialize instead a truly random policy
 Policy::Policy(size_t rows, size_t cols):
     _params{Eigen::MatrixXd(rows, cols)}
     {
         //We initialize a stochastic matrix
         for(std::size_t i=0; i<rows; i++){
-            double remainder=1;
-            for(std::size_t j=0; j<cols-1; j++){
-                double l = (double)rand()/RAND_MAX;
+            for(std::size_t j=0; j<cols; j++){
+                double l = 0.1;
                 _params(i,j) = l;
-                remainder -= l;
             }
-            _params(i,cols-1) = remainder;
         }
     }
 

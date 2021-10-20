@@ -37,24 +37,25 @@ Executions:
 // Main execution
 int main(){
 
-    double steering_angle = 30;
-    double capture_range = 0.2;
+    double steering_angle = M_PI/6;
+    double capture_range = 0.3;
     constexpr double gamma = 1;
-    double alpha_w = 0.5;
-    double alpha_t = 0.5;
+    double alpha_w = 0.01;
+    double alpha_t = 0.001;
     //Decide the episode length
-    std::size_t episodes_num = 100;
-    std::size_t episode_length = 5000;
+
+    std::size_t episodes_num = 800;
+    std::size_t episode_length = 500;
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
     std::size_t num_of_birds = 2;
     constexpr std::size_t sectors_num = 5;
-    const std::size_t state_space_dim = pow(3, sectors_num);
+    const std::size_t state_space_dim = pow(2, sectors_num);
     //The first one is the pursuer, the other are evaders
 
     //State initialization
-    Environment env(num_of_birds, 0.2,capture_range, steering_angle); //How many birds
+    Environment env(num_of_birds, 0.1, capture_range, steering_angle); //How many birds
     std::vector<Agent> agents(num_of_birds);
 
     for(std::size_t i = 0; i < agents.size(); ++i ){
@@ -72,6 +73,12 @@ int main(){
     std::vector<double> delta(num_of_birds);
 
     std::ofstream traj_file;
+    std::ofstream episode_file;
+    episode_file.open("episode.csv");
+    episode_file << "Episode, end_time" << std::endl;
+
+    //Time of episode
+    std::size_t t = 0;
 
     //We should also loop on multiple episodes
     for(std::size_t ep=0; ep<episodes_num; ep++){
@@ -81,8 +88,7 @@ int main(){
         prev_state = std::make_shared<State>(env.get_state());
         for(std::size_t i=0; i<num_of_birds; ++i)
             prev_obs[i] = std::make_shared<Observable>(agents[i].obs(*prev_state));
-
-           
+      
         //File initialization
         traj_file.open("trajectories/pursuer_trajectory" + std::to_string(ep) + ".csv");
 
@@ -95,7 +101,8 @@ int main(){
         traj_file << std::endl;
 
 
-        for(std::size_t t = 0; t<episode_length; ++t){
+        while(t < episode_length){
+        //for(std::size_t t = 0; t<episode_length; ++t){
             traj_file << *prev_state;
             
             //All agents get an observation based on the current state and return an action
@@ -109,6 +116,13 @@ int main(){
 
             r = env.reward(*prev_state);
 
+            //Check if episode is over:
+            if(r[0] == 1){
+                //episode_file << ep << "," << t << std::endl;
+                //std::cout << "Episode " << ep << " finished at time " << t <<  std::endl;
+                break;
+            }
+
             for(std::size_t i=0; i<num_of_birds; ++i)
                 delta[i] = r[i] + gamma*v[i][*next_obs[i]] - v[i][*prev_obs[i]];
 
@@ -120,21 +134,20 @@ int main(){
             //Theta values update (here comes the tricky)
             agents[0].update_policy(alpha_t*delta[0]*pow(gamma,t), *prev_obs[0], a[0]);
 
-            //Check if episode is over:
-            if(r[0] == 1){
-                std::cout << "Episode " << ep << " finished at time " << t <<  std::endl;
-                break;
-            }
-
             //State update
             prev_state = next_state;
 
             //Observation update
             for(std::size_t i=0; i<num_of_birds; ++i)
                 prev_obs[i] = next_obs[i];
+
+            //Update time step
+            t++;
         }
 
         traj_file.close();
+        episode_file << ep << "," << t << std::endl;
+        t = 0;
         //std::cout << "Episode finished at time " << episode_length <<  std::endl;
     }
 

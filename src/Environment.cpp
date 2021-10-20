@@ -4,7 +4,7 @@ Environment::Environment(std::size_t birds_num):
     _state(birds_num),
     _v0{0.1},
     _capture_range{0.1},
-    _steering_angle{30}
+    _steering_angle{M_PI/6}
     {}
 
 Environment::Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle):
@@ -18,22 +18,30 @@ Environment::Environment(std::size_t birds_num, double v0, double capture_range,
 //
 State Environment::dynamics(std::vector<Action> a, State& s){
 
-    double alpha_new = _steering_angle*M_PI/180;
+    double alpha_new = _steering_angle;
     //State new_state(s.size());
 
     for(std::size_t i=0; i<s.size(); ++i){
+        
+        double v;
+        //Slight speed advantage to pursuer
+        if(i==0){
+            v = _v0*1.2;
+        } else {
+            v = _v0;
+        }
         switch(a[i]){
             case Action::left:
                 //std::cout << "Left" << std::endl;
-                s.update(_v0, -alpha_new, i);
+                s.update(v, -alpha_new, i);
                 break;
             case Action::straight:
                 //std::cout << "Straight" << std::endl;
-                s.update(_v0, 0, i);
+                s.update(v, 0, i);
                 break;
             case Action::right:
                 //std::cout << "Right" << std::endl;
-                s.update(_v0, alpha_new, i);
+                s.update(v, alpha_new, i);
                 break;
         }
     }

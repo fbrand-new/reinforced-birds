@@ -48,7 +48,7 @@ class Agent{
         //Utilities function
         static double relative_distance(const Bird &a, const Bird &b);
         static double relative_angle(const Bird &a, const Bird &b);
-        
+
 };
 
 
