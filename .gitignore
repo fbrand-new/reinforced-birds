@@ -2,3 +2,4 @@
 .ipynb_checkpoints
 trajectories
 episode.csv
+policy.csv

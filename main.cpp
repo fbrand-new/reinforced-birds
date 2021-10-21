@@ -37,6 +37,7 @@ Executions:
 // Main execution
 int main(){
 
+    constexpr std::size_t action_num = 3;
     double steering_angle = M_PI/6;
     double capture_range = 0.3;
     constexpr double gamma = 1;
@@ -44,7 +45,7 @@ int main(){
     double alpha_t = 0.001;
     //Decide the episode length
 
-    std::size_t episodes_num = 800;
+    std::size_t episodes_num = 1500;
     std::size_t episode_length = 500;
 
     //Decide the number of birds. 
@@ -74,8 +75,13 @@ int main(){
 
     std::ofstream traj_file;
     std::ofstream episode_file;
+    std::ofstream policy_file;
+
     episode_file.open("episode.csv");
     episode_file << "Episode, end_time" << std::endl;
+
+    policy_file.open("policy.csv");
+    policy_file << "Left,Straight,Right" << std::endl;
 
     //Time of episode
     std::size_t t = 0;
@@ -151,15 +157,14 @@ int main(){
         //std::cout << "Episode finished at time " << episode_length <<  std::endl;
     }
 
-
+    //The lower the number the further right on the vision cone we are
+    for(std::size_t s=0; s<state_space_dim; ++s){
+        for(std::size_t ac=0; ac<action_num-1; ++ac){
+            policy_file << agents[0].get_policy()->get(s,ac) << ",";
+        }
+        policy_file << agents[0].get_policy()->get(s, action_num-1) << std::endl;
+    }
+    
     return 0;
 }
-
-// ----------------------------------------------------------------------
-
-// Function definition
-
-// Action random_walk(){
-//     return static_cast<Action>( rand() % (static_cast<int>(Action::right)+1));
-// }
 
