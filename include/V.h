@@ -12,6 +12,7 @@ class V{
     public:
         V(std::size_t size);
         double& operator[](Observable &o);
+        double& operator[](std::size_t i);
 };
 
 #endif

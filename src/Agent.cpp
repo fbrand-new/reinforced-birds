@@ -2,8 +2,8 @@
 
 Agent::Agent():
     _p{std::make_unique<Policy>()},
-    _vision_range{100},
-    _vision_angle{M_PI}
+    _vision_range{10},
+    _vision_angle{6/5*M_PI}
     {}
 
 // Agent::Agent(std::size_t id, Policy &p):
@@ -46,7 +46,7 @@ Observable Agent::obs(State &s){
                 if (relative_distance(birds[me], birds[k]) > _vision_range)
                     continue;              
                 else if (relative_angle(birds[me], birds[k]) < vision_sector_max){
-                    if(relative_angle(birds[me], birds[k]) > vision_sector_min)
+                    if(relative_angle(birds[me], birds[k]) >= vision_sector_min)
                         _o.non_empty_sector(i);
                 }
             }

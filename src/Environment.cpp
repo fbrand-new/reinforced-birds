@@ -24,16 +24,18 @@ State Environment::dynamics(std::vector<Action> a, State& s){
     for(std::size_t i=0; i<s.size(); ++i){
         
         double v;
+        //Slight speed advantage to evader -> This leads to linear evasion. Game over
         //Slight speed advantage to pursuer
         if(i==0){
-            v = _v0*1.2;
+            v = _v0*1.5;
         } else {
             v = _v0;
         }
+        //v=_v0;
         switch(a[i]){
             case Action::left:
                 //std::cout << "Left" << std::endl;
-                s.update(v, -alpha_new, i);
+                s.update(v, +alpha_new, i);
                 break;
             case Action::straight:
                 //std::cout << "Straight" << std::endl;
@@ -41,7 +43,7 @@ State Environment::dynamics(std::vector<Action> a, State& s){
                 break;
             case Action::right:
                 //std::cout << "Right" << std::endl;
-                s.update(v, alpha_new, i);
+                s.update(v, -alpha_new, i);
                 break;
         }
     }
