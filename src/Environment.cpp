@@ -26,7 +26,7 @@ State Environment::dynamics(std::vector<Action> a, State& s){
         //Slight speed advantage to evader -> This leads to linear evasion. Game over
         //Slight speed advantage to pursuer
         if(i==0){
-            v = _v0*1.5;
+            v = _v0*1.25;
         } else {
             v = _v0;
         }

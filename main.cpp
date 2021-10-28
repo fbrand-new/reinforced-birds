@@ -8,6 +8,7 @@
 #include "Boltzmann.h"
 #include "V.h"
 #include "Signal.h"
+#include <utility>
 #include <string>
 #include <list>
 #include <memory>
@@ -32,7 +33,7 @@ int main(){
     //Environment params
     constexpr std::size_t action_num = 3;
     double steering_angle = M_PI/6;
-    double capture_range = 0.5;
+    double capture_range = 0.3;
     constexpr double gamma = 1;
 
     //Decide the number of birds. 
@@ -43,15 +44,15 @@ int main(){
     //The first one is the pursuer, the other are evaders
 
     //Learning rates
-    double alpha_w = 0.001;
-    double alpha_t = 0.0001;
+    double alpha_w = 0.01;
+    double alpha_t = 0.001;
 
     //Decide the episode length
     std::size_t episodes_num = 5000;
     std::size_t episode_length = 500;
 
     //Instantiate a learning signal to alternate between preys and predator learning
-    Signal pred_training(std::vector<std::size_t>{1000, 2000, 5000});
+    Signal pred_training(std::vector<std::size_t>{2500,10000,20000});
 
     //---------------------------------------------------------------------------------
 
@@ -77,7 +78,7 @@ int main(){
     bool pred_learning;
 
     //Matrix storing data
-    std::list<State> traj;
+    std::list<std::pair<std::size_t,State>> traj;
     std::list<std::vector<std::size_t>> t_ep;
     Eigen::MatrixXd value_policy(episodes_num*state_space_dim, 4*num_of_birds);
 
@@ -90,7 +91,7 @@ int main(){
     episode_file << "Episode,EndTime,PredatorTraining" << std::endl;
     value_policy_file.open("value_policy.csv");
     value_policy_file << 
-                    "Value_e,Left_e,Straight_e,Right_e,Value_p,Left_p,Straight_p,Right_p" 
+                    "Value_p,Left_p,Straight_p,Right_p,Value_e,Left_e,Straight_e,Right_e" 
                     << std::endl;
 
 
@@ -101,6 +102,7 @@ int main(){
     traj_file.open("trajectories/pursuer_trajectory.csv");
 
     //Header construction
+    traj_file << "Episode" << ",";
     for(std::size_t i=0; i<num_of_birds; ++i){
         traj_file << "x" << i << ",y" << i;
         if(i<num_of_birds-1) 
@@ -122,7 +124,7 @@ int main(){
         while(t < episode_length){
             
             //traj_file << *prev_state;
-            traj.push_back(*prev_state);
+            traj.push_back(std::make_pair(ep,*prev_state));
 
             //All agents get an observation based on the current state and return an action
             for(std::size_t i = 0; i < agents.size(); ++i){
@@ -137,7 +139,17 @@ int main(){
 
             //Check if episode is over:
             if(r[0] == 1){
-                break;
+                for(std::size_t i=0; i<num_of_birds; ++i){
+                    delta[i] = r[i] - v[i][*prev_obs[i]];
+                    v[i][*prev_obs[i]] += alpha_w*delta[i]; //V values update
+                }   
+                //Theta values update
+                if(pred_learning){
+                    agents[0].update_policy(alpha_t*delta[0], *prev_obs[0], a[0]);
+                } else {
+                    agents[1].update_policy(alpha_t*delta[1], *prev_obs[1], a[1]);
+                }   
+                break; 
             }
 
             for(std::size_t i=0; i<num_of_birds; ++i){
@@ -177,7 +189,7 @@ int main(){
     }
 
     for(auto it1=traj.begin(); it1!=traj.end(); ++it1)
-        traj_file << *it1 << "\n";
+        traj_file << std::get<0>(*it1) << "," << std::get<1>(*it1) << "\n";
 
     for(auto it=t_ep.begin(); it!=t_ep.end(); ++it)
         episode_file << (*it)[0] << "," << (*it)[1] << "," << (*it)[2] << "\n";
