@@ -10,7 +10,7 @@ bool Signal::step(std::size_t t){
 
     for(std::size_t i=0; i<s; ++i){
         if(t < this->_time_of_step[i]){
-            return i%2;
+            return (i%2 == 0);
             break;
         }
     }

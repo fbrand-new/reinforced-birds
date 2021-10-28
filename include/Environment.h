@@ -29,6 +29,7 @@ class Environment
 
         //p(s'|a,s): One step dynamics. We are going to suppose to be in a deterministic settings, so s' = f(a,s)
         State dynamics(std::vector<Action> a, State& s);
+        State random_evader(std::vector<Action> a, State& s);
         State& get_state(){return _state;}
         Reward reward(State &s); //TODO
 

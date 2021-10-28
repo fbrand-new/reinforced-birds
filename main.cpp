@@ -9,6 +9,7 @@
 #include "V.h"
 #include "Signal.h"
 #include <string>
+#include <list>
 #include <memory>
 #include <algorithm>
 #include <Eigen/Dense>
@@ -22,17 +23,7 @@ Define:
 - p(s'|a,s): One step dynamics
 - o(s): Observables
 - R(s,a,s'): Rewards -> Here we just going to have R(s')
-
-Executions:
-- Random walk
 */
-
-//---------------------------------
-// Hardcoded policies
-
-// random walk policy
-// Action random_walk();
-
 // ----------------------------------- ---
 
 // Main execution
@@ -83,28 +74,39 @@ int main(){
     Reward r(num_of_birds);
     std::vector<V> v(num_of_birds, V(state_space_dim));
     std::vector<double> delta(num_of_birds);
+    bool pred_learning;
+
+    //Matrix storing data
+    std::list<State> traj;
+    std::list<std::vector<std::size_t>> t_ep;
+    Eigen::MatrixXd value_policy(episodes_num*state_space_dim, 4*num_of_birds);
 
     //Output files of the simulation
     std::ofstream traj_file;
     std::ofstream episode_file;
-    std::ofstream policy_pursuer_file;
-    std::ofstream policy_evader_file;
-    std::ofstream value_pursuer_file;
-    std::ofstream value_evader_file;
+    std::ofstream value_policy_file;
 
     episode_file.open("episode.csv");
     episode_file << "Episode,EndTime,PredatorTraining" << std::endl;
-    policy_pursuer_file.open("policy_pursuer.csv");
-    policy_pursuer_file << "Episode,State,Left,Straight,Right" << std::endl;
-    policy_evader_file.open("policy_evader.csv");
-    policy_evader_file << "Episode,State,Left,Straight,Right" << std::endl;
-    value_pursuer_file.open("value_pursuer.csv");
-    value_pursuer_file << "Episode,State,Value" << std::endl;
-    value_evader_file.open("value_pursuer.csv");
-    value_evader_file << "Episode,State,Value" << std::endl;
+    value_policy_file.open("value_policy.csv");
+    value_policy_file << 
+                    "Value_e,Left_e,Straight_e,Right_e,Value_p,Left_p,Straight_p,Right_p" 
+                    << std::endl;
+
 
     //Time of episode
     std::size_t t = 0;
+
+    //File initialization
+    traj_file.open("trajectories/pursuer_trajectory.csv");
+
+    //Header construction
+    for(std::size_t i=0; i<num_of_birds; ++i){
+        traj_file << "x" << i << ",y" << i;
+        if(i<num_of_birds-1) 
+            traj_file << ",";
+    }
+    traj_file << "\n";
 
     //We should also loop on multiple episodes
     for(std::size_t ep=0; ep<episodes_num; ep++){
@@ -115,22 +117,13 @@ int main(){
         for(std::size_t i=0; i<num_of_birds; ++i)
             prev_obs[i] = std::make_shared<Observable>(agents[i].obs(*prev_state));
       
-        //File initialization
-        traj_file.open("trajectories/pursuer_trajectory" + std::to_string(ep) + ".csv");
-
-        //Header construction
-        for(std::size_t i=0; i<num_of_birds; ++i){
-            traj_file << "x" << i << ",y" << i;
-            if(i<num_of_birds-1) 
-                traj_file << ",";
-        }
-        traj_file << std::endl;
-
-        bool pred_learning = pred_training.step(ep);
+        pred_learning = pred_training.step(ep);
 
         while(t < episode_length){
-            traj_file << *prev_state;
             
+            //traj_file << *prev_state;
+            traj.push_back(*prev_state);
+
             //All agents get an observation based on the current state and return an action
             for(std::size_t i = 0; i < agents.size(); ++i){
                 a[i] = (agents[i].act(*prev_state, *prev_obs[i]));
@@ -170,31 +163,34 @@ int main(){
             t++;
         }
 
-        //File update
-        //The lower the number the further right on the vision cone we are
-        for(std::size_t s=0; s<state_space_dim; ++s){
-            value_pursuer_file << ep << "," << s << "," << v[0][s] << std::endl;
-            value_evader_file << ep << "," << s << "," << v[1][s] << std::endl;
-            policy_pursuer_file  << ep << "," << s << ",";
-            policy_evader_file  << ep << "," << s << ",";
-            for(std::size_t ac=0; ac<action_num-1; ++ac){
-                policy_pursuer_file << agents[0].get_policy()->get(s,ac) << ",";
-                policy_evader_file << agents[1].get_policy()->get(s,ac) << ",";
+        for(std::size_t i=0; i < num_of_birds; ++i){
+            for(std::size_t k=0; k<state_space_dim; ++k){
+                value_policy(ep*state_space_dim+k, i*4) = v[i][k];
+                value_policy(ep*state_space_dim+k, i*4+1) = agents[i].get_policy()->get(k,0);
+                value_policy(ep*state_space_dim+k, i*4+2) = agents[i].get_policy()->get(k,1);
+                value_policy(ep*state_space_dim+k, i*4+3) = agents[i].get_policy()->get(k,2);
             }
-            policy_pursuer_file << agents[0].get_policy()->get(s, action_num-1) << std::endl;
-            policy_evader_file << agents[1].get_policy()->get(s, action_num-1) << std::endl;
         }
         
-        traj_file.close();
-        episode_file << ep << "," << t << "," << pred_learning << std::endl;
+        t_ep.push_back(std::vector<std::size_t>{ep,t,pred_learning});
         t = 0;
     }
 
+    for(auto it1=traj.begin(); it1!=traj.end(); ++it1)
+        traj_file << *it1 << "\n";
+
+    for(auto it=t_ep.begin(); it!=t_ep.end(); ++it)
+        episode_file << (*it)[0] << "," << (*it)[1] << "," << (*it)[2] << "\n";
+
+    for(auto i=0; i<episodes_num*state_space_dim; ++i){
+        for(auto j=0; j<4*num_of_birds-1; ++j)
+            value_policy_file << value_policy(i,j) << ",";
+        value_policy_file << value_policy(i,4*num_of_birds-1) << "\n";
+    }
+
+    traj_file.close();
     episode_file.close();
-    value_evader_file.close();
-    value_pursuer_file.close();
-    policy_evader_file.close();
-    policy_pursuer_file.close();
+    value_policy_file.close();
     return 0;
 }
 

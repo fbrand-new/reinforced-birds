@@ -19,7 +19,6 @@ Environment::Environment(std::size_t birds_num, double v0, double capture_range,
 State Environment::dynamics(std::vector<Action> a, State& s){
 
     double alpha_new = _steering_angle;
-    //State new_state(s.size());
 
     for(std::size_t i=0; i<s.size(); ++i){
         
@@ -49,6 +48,8 @@ State Environment::dynamics(std::vector<Action> a, State& s){
     }
     return s;
 }
+
+//State Environment::random_evader(std::vector<Action> a, State& s);
 
 Reward Environment::reward(State &s){
 
