@@ -13,6 +13,7 @@ class Signal{
         //Signal(std::vector<std::size_t> &&t);
         //For now let's return a step function
         bool step(std::size_t t);
+        std::size_t multistep(std::size_t t, std::size_t max_step);
 };
 
 #endif

@@ -33,26 +33,30 @@ int main(){
     //Environment params
     constexpr std::size_t action_num = 3;
     double steering_angle = M_PI/6;
-    double capture_range = 0.3;
+    double capture_range = 0.5;
     constexpr double gamma = 1;
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
-    std::size_t num_of_birds = 2;
+    std::size_t num_of_birds = 3;
     constexpr std::size_t sectors_num = 5;
     const std::size_t state_space_dim = pow(2, sectors_num);
     //The first one is the pursuer, the other are evaders
 
     //Learning rates
     double alpha_w = 0.01;
-    double alpha_t = 0.001;
+    double alpha_t = 0.0001;
 
     //Decide the episode length
-    std::size_t episodes_num = 5000;
+    std::size_t episodes_num = 30000;
     std::size_t episode_length = 500;
 
     //Instantiate a learning signal to alternate between preys and predator learning
-    Signal pred_training(std::vector<std::size_t>{2500,10000,20000});
+    std::vector<std::size_t> learning_agent;
+    for (auto i=1; i<static_cast<int>(episodes_num/2000); ++i){
+        learning_agent.push_back(5000*i);
+    }
+    Signal pred_training(learning_agent);
 
     //---------------------------------------------------------------------------------
 
@@ -72,10 +76,11 @@ int main(){
     std::vector<Action> a(num_of_birds);
     std::vector<std::shared_ptr<Observable>> prev_obs(num_of_birds);
     std::vector<std::shared_ptr<Observable>> next_obs(num_of_birds);
-    Reward r(num_of_birds);
+    //Reward r(num_of_birds);
     std::vector<V> v(num_of_birds, V(state_space_dim));
     std::vector<double> delta(num_of_birds);
-    bool pred_learning;
+    std::size_t ag_l; //The agent currently learning
+    std::pair<Reward,bool> r; //Reward 
 
     //Matrix storing data
     std::list<std::pair<std::size_t,State>> traj;
@@ -87,19 +92,8 @@ int main(){
     std::ofstream episode_file;
     std::ofstream value_policy_file;
 
-    episode_file.open("episode.csv");
-    episode_file << "Episode,EndTime,PredatorTraining" << std::endl;
-    value_policy_file.open("value_policy.csv");
-    value_policy_file << 
-                    "Value_p,Left_p,Straight_p,Right_p,Value_e,Left_e,Straight_e,Right_e" 
-                    << std::endl;
-
-
-    //Time of episode
-    std::size_t t = 0;
-
     //File initialization
-    traj_file.open("trajectories/pursuer_trajectory.csv");
+    traj_file.open("data/pursuer_trajectory.csv");
 
     //Header construction
     traj_file << "Episode" << ",";
@@ -110,6 +104,27 @@ int main(){
     }
     traj_file << "\n";
 
+    episode_file.open("data/episode.csv");
+    episode_file << "Episode,EndTime,PredatorTraining" << std::endl;
+    value_policy_file.open("data/value_policy.csv");
+    for(auto i=0; i<num_of_birds-1; i++){
+        value_policy_file << "value_" + std::to_string(i) << ",";
+        value_policy_file << "left_" + std::to_string(i) << ",";
+        value_policy_file << "straight_" + std::to_string(i) << ",";
+        value_policy_file << "right_" + std::to_string(i) << ",";
+    }
+
+    value_policy_file << "value_" + std::to_string(num_of_birds-1) << ",";
+    value_policy_file << "left_" + std::to_string(num_of_birds-1) << ",";
+    value_policy_file << "straight_" + std::to_string(num_of_birds-1) << ",";
+    value_policy_file << "right_" + std::to_string(num_of_birds-1) << std::endl;
+    // value_policy_file << 
+    //                 "Value_p,Left_p,Straight_p,Right_p,Value_e,Left_e,Straight_e,Right_e" 
+    //                 << std::endl;
+
+    //Time of episode
+    std::size_t t = 0;
+
     //We should also loop on multiple episodes
     for(std::size_t ep=0; ep<episodes_num; ep++){
 
@@ -119,12 +134,13 @@ int main(){
         for(std::size_t i=0; i<num_of_birds; ++i)
             prev_obs[i] = std::make_shared<Observable>(agents[i].obs(*prev_state));
       
-        pred_learning = pred_training.step(ep);
+        ag_l = pred_training.multistep(ep,num_of_birds);
 
         while(t < episode_length){
             
             //traj_file << *prev_state;
-            traj.push_back(std::make_pair(ep,*prev_state));
+            if(ep%100 == 0)
+                traj.push_back(std::make_pair(ep,*prev_state));
 
             //All agents get an observation based on the current state and return an action
             for(std::size_t i = 0; i < agents.size(); ++i){
@@ -135,34 +151,37 @@ int main(){
             for(std::size_t i=0; i<num_of_birds; ++i)
                 next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
 
+            //TODO: return a pair<reward,bool> with true iff episode over
             r = env.reward(*prev_state);
 
             //Check if episode is over:
-            if(r[0] == 1){
+            if(std::get<1>(r) == 1){
                 for(std::size_t i=0; i<num_of_birds; ++i){
-                    delta[i] = r[i] - v[i][*prev_obs[i]];
+                    delta[i] = std::get<0>(r)[i] - v[i][*prev_obs[i]];
                     v[i][*prev_obs[i]] += alpha_w*delta[i]; //V values update
                 }   
                 //Theta values update
-                if(pred_learning){
-                    agents[0].update_policy(alpha_t*delta[0], *prev_obs[0], a[0]);
-                } else {
-                    agents[1].update_policy(alpha_t*delta[1], *prev_obs[1], a[1]);
-                }   
+                agents[ag_l].update_policy(alpha_t*delta[ag_l], *prev_obs[ag_l], a[ag_l]);
+                // if(pred_learning==0){
+                //     agents[0].update_policy(alpha_t*delta[0], *prev_obs[0], a[0]);
+                // } else {
+                //     agents[1].update_policy(alpha_t*delta[1], *prev_obs[1], a[1]);
+                // }   
                 break; 
             }
 
             for(std::size_t i=0; i<num_of_birds; ++i){
-                delta[i] = r[i] + gamma*v[i][*next_obs[i]] - v[i][*prev_obs[i]];
+                delta[i] = std::get<0>(r)[i] + gamma*v[i][*next_obs[i]] - v[i][*prev_obs[i]];
                 v[i][*prev_obs[i]] += alpha_w*delta[i]; //V values update
             }              
 
             //Theta values update
-            if(pred_learning){
-                agents[0].update_policy(alpha_t*delta[0], *prev_obs[0], a[0]);
-            } else {
-                agents[1].update_policy(alpha_t*delta[1], *prev_obs[1], a[1]);
-            }
+            agents[ag_l].update_policy(alpha_t*delta[ag_l], *prev_obs[ag_l], a[ag_l]);
+            // if(pred_learning==0){
+            //     agents[0].update_policy(alpha_t*delta[0], *prev_obs[0], a[0]);
+            // } else {
+            //     agents[1].update_policy(alpha_t*delta[1], *prev_obs[1], a[1]);
+            // }
 
             //State update
             prev_state = next_state;
@@ -184,12 +203,12 @@ int main(){
             }
         }
         
-        t_ep.push_back(std::vector<std::size_t>{ep,t,pred_learning});
+        t_ep.push_back(std::vector<std::size_t>{ep,t,ag_l});
         t = 0;
     }
 
     for(auto it1=traj.begin(); it1!=traj.end(); ++it1)
-        traj_file << std::get<0>(*it1) << "," << std::get<1>(*it1) << "\n";
+        traj_file << std::get<0>(*it1) << "," << std::get<1>(*it1); //<< "\n";
 
     for(auto it=t_ep.begin(); it!=t_ep.end(); ++it)
         episode_file << (*it)[0] << "," << (*it)[1] << "," << (*it)[2] << "\n";

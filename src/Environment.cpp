@@ -51,23 +51,48 @@ State Environment::dynamics(std::vector<Action> a, State& s){
 
 //State Environment::random_evader(std::vector<Action> a, State& s);
 
-Reward Environment::reward(State &s){
+// Reward Environment::reward(State &s){
+
+//     Reward r(s.size());
+//     auto predator = s.get_birds()[0];
+
+//     //By default, we get a negative reward to predator
+//     r[0] = -1;
+
+//     for(std::size_t i=1; i<s.size(); ++i){
+//         if(Agent::relative_distance(predator, s.get_birds()[i]) < _capture_range){
+//             r[0] = 1;
+//             //r[1] = -1;
+//             break;
+//         } 
+//         r[i] = 1;
+//     }
+
+//     return r;
+// }
+
+std::pair<Reward,bool> Environment::reward(State &s){
 
     Reward r(s.size());
+    bool episode_over = 0;
+
     auto predator = s.get_birds()[0];
 
     //By default, we get a negative reward to predator
     r[0] = -1;
 
+
     for(std::size_t i=1; i<s.size(); ++i){
         if(Agent::relative_distance(predator, s.get_birds()[i]) < _capture_range){
-            r[0] = 1;
-            break;
+            //break;
+            // r[0] = 1;
+            // r[i] = -1;
+            episode_over=1;
         } 
         r[i] = 1;
     }
 
-    return r;
+    return std::make_pair(r,episode_over);
 }
 
 void Environment::reset(){

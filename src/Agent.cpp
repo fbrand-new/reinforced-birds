@@ -81,7 +81,7 @@ double Agent::relative_angle(const Bird &a, const Bird &b){
     double x_rel = b.get_x() - a.get_x();
     double y_rel = b.get_y() - a.get_y();
 
-    //Counter-clockwise rotation of the system towards Bird a orientation
+    //Clockwise rotation of the system towards Bird a orientation
     double x_prime = cos(-alpha)*x_rel - sin(-alpha)*y_rel;
     double y_prime = sin(-alpha)*x_rel + cos(-alpha)*y_rel;
 

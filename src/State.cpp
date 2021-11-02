@@ -1,8 +1,11 @@
 #include "State.h"
 
 State::State(unsigned int i):
-    _birds(i, Bird(2*i + 1, 3*i + 5, (rand()%12 -6)*M_PI/6))
-    {}
+    //_birds(i, Bird(i==0 ? 2*rand()/RAND_MAX + 1 : 1, i==0 ? 3*rand()/RAND_MAX + 5 : 5, (rand()%12 -6)*M_PI/6))
+    _birds(i,Bird((double)rand()/RAND_MAX+3, (double)rand()/RAND_MAX+4, (rand()%12 -6)*M_PI/6))
+    {
+        _birds[0].reset(0,0,(rand()%12 -6)*M_PI/6);
+    }
 
 void State::update(double velocity, double angle, unsigned int i){
 
@@ -41,7 +44,9 @@ std::ostream& operator <<(std::ostream & os, State &s){
 
 void State::reset(){
 
-    for(std::size_t i=0; i< _birds.size(); ++i){
-        _birds[i].reset(2*i + 1, 3*i + 5, (rand()%12 -6)*M_PI/6);
+    _birds[0].reset(0,0,(rand()%12 -6)*M_PI/6);
+    for(std::size_t i=1; i< _birds.size(); ++i){
+        //_birds[i].reset(2*i + 1, 3*i + 5, (rand()%12 -6)*M_PI/6);
+        _birds[i].reset((double)rand()/RAND_MAX+3, (double)rand()/RAND_MAX+4, (rand()%12 -6)*M_PI/6);
     }
 }
