@@ -13,7 +13,8 @@ class Agent{
 
     private:
         std::size_t _id; //This is the id of the bird so that we can actually observe the others!
-        Observable _o;
+        Observable _o; //TODO:we need two of this: one to take into consideration predators, one preys
+        //Observable _o_preys;
         //Policy * _p;
         std::unique_ptr<Policy> _p;
         double _vision_range;

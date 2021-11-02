@@ -38,7 +38,7 @@ int main(){
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
-    std::size_t num_of_birds = 3;
+    std::size_t num_of_birds = 10;
     constexpr std::size_t sectors_num = 5;
     const std::size_t state_space_dim = pow(2, sectors_num);
     //The first one is the pursuer, the other are evaders
@@ -48,13 +48,13 @@ int main(){
     double alpha_t = 0.0001;
 
     //Decide the episode length
-    std::size_t episodes_num = 30000;
+    std::size_t episodes_num = 60000;
     std::size_t episode_length = 500;
 
     //Instantiate a learning signal to alternate between preys and predator learning
     std::vector<std::size_t> learning_agent;
     for (auto i=1; i<static_cast<int>(episodes_num/2000); ++i){
-        learning_agent.push_back(5000*i);
+        learning_agent.push_back(2000*i);
     }
     Signal pred_training(learning_agent);
 
@@ -151,7 +151,6 @@ int main(){
             for(std::size_t i=0; i<num_of_birds; ++i)
                 next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
 
-            //TODO: return a pair<reward,bool> with true iff episode over
             r = env.reward(*prev_state);
 
             //Check if episode is over:
