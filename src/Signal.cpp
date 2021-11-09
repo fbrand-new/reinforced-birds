@@ -10,12 +10,12 @@ bool Signal::step(std::size_t t){
 
     for(std::size_t i=0; i<s; ++i){
         if(t < this->_time_of_step[i]){
-            return (i%2 == 0);
+            return (i%2);
             break;
         }
     }
 
-    return (s-1)%2;
+    return s%2;
 }
 
 std::size_t Signal::multistep(std::size_t t, std::size_t max_step){

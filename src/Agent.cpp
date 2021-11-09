@@ -6,11 +6,6 @@ Agent::Agent():
     _vision_angle{6/5*M_PI}
     {}
 
-// Agent::Agent(std::size_t id, Policy &p):
-//     _id{id},
-//     _p{p}
-//     {}
-
 Agent::Agent(Policy &p):
     _p{std::make_unique<Policy>(p)}
     {}
@@ -24,12 +19,10 @@ Agent::Agent(double vision_range, double vision_angle):
 Observable Agent::obs(State &s){
 
     std::size_t sectors_num = this->_o.get_sectors_num();
+    //std::size_t max_val = this->_o.get_max_val();
+
     auto birds = s.get_birds();
     std::size_t me = this->get_id();
-
-    //double alpha = birds[me].get_alpha();
-    //This is the relative angle with respect to the agent orientation
-    //double delta = abs(relative_angle(birds[me], birds[k]) -  birds[me].get_alpha()); 
 
     //The vision is related to the orientation of the bird
     double vision_sector_min = -_vision_angle/2;
@@ -46,8 +39,23 @@ Observable Agent::obs(State &s){
                 if (relative_distance(birds[me], birds[k]) > _vision_range)
                     continue;              
                 else if (relative_angle(birds[me], birds[k]) < vision_sector_max){
-                    if(relative_angle(birds[me], birds[k]) >= vision_sector_min)
-                        _o.non_empty_sector(i);
+                    if(relative_angle(birds[me], birds[k]) >= vision_sector_min){
+                        if(birds[me].get_species() == Species::pursuer){ //If I am a pursuer do this update
+                            if(birds[k].get_species() == Species::pursuer){
+                                _o.non_empty_sector(i,1); 
+                            } else {
+                                _o.non_empty_sector(i); //Signals an evader in the cone
+                                break;
+                            }     
+                        } else {
+                            if(birds[k].get_species() == Species::pursuer){
+                                _o.non_empty_sector(i,1); //Signals a pursuer in the cone
+                                break;
+                            } else {
+                                _o.non_empty_sector(i);
+                            }  
+                        }
+                    }         
                 }
             }
         }     

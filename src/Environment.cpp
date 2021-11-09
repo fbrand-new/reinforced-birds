@@ -14,8 +14,7 @@ Environment::Environment(std::size_t birds_num, double v0, double capture_range,
     _steering_angle{steering_angle}
     {}
 
-//TODO: we should pass a vector of actions, and the indexes of the affected birds!
-//
+
 State Environment::dynamics(std::vector<Action> a, State& s){
 
     double alpha_new = _steering_angle;
@@ -26,7 +25,7 @@ State Environment::dynamics(std::vector<Action> a, State& s){
         //Slight speed advantage to evader -> This leads to linear evasion. Game over
         //Slight speed advantage to pursuer
         if(i==0){
-            v = _v0*1.25;
+            v = _v0*1.5;
         } else {
             v = _v0;
         }
@@ -71,7 +70,7 @@ State Environment::dynamics(std::vector<Action> a, State& s){
 //     return r;
 // }
 
-std::pair<Reward,bool> Environment::reward(State &s){
+std::pair<Reward,bool> Environment::reward(State &s, double episode_length){
 
     Reward r(s.size());
     bool episode_over = 0;
@@ -86,11 +85,18 @@ std::pair<Reward,bool> Environment::reward(State &s){
         if(Agent::relative_distance(predator, s.get_birds()[i]) < _capture_range){
             //break;
             // r[0] = 1;
-            // r[i] = -1;
+            r[i] = -episode_length;
             episode_over=1;
-        } 
-        r[i] = 1;
+        } else{
+            r[i] = 1;
+        }
     }
+
+    // if(episode_over==1){
+    //     for(auto i =0; i<s.size(); ++i)
+    //         std::cout << r[i] << std::endl;
+    // }
+
 
     return std::make_pair(r,episode_over);
 }

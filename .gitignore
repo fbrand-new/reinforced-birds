@@ -4,3 +4,4 @@ trajectories
 episode.csv
 policy.csv
 *.csv
+perf.data*

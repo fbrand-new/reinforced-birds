@@ -1,15 +1,15 @@
 #include "State.h"
 
 State::State(unsigned int i):
-    //_birds(i, Bird(i==0 ? 2*rand()/RAND_MAX + 1 : 1, i==0 ? 3*rand()/RAND_MAX + 5 : 5, (rand()%12 -6)*M_PI/6))
-    _birds(i,Bird((double)rand()/RAND_MAX+3, (double)rand()/RAND_MAX+4, (rand()%12 -6)*M_PI/6))
+    _birds(i, Bird::random_bird(10,0))
+    //_birds(i,Bird(rand_x(), rand_y(), rand_a(),Species::evader))
     {
-        _birds[0].reset(0,0,(rand()%12 -6)*M_PI/6);
+        _birds[0].reset(0,0,rand_a());
+        _birds[0].set_species(Species::pursuer);
     }
 
 void State::update(double velocity, double angle, unsigned int i){
 
-    //bird_i = _birds[i];
     _birds[i].update(velocity, angle);
 
 }
@@ -44,9 +44,23 @@ std::ostream& operator <<(std::ostream & os, State &s){
 
 void State::reset(){
 
-    _birds[0].reset(0,0,(rand()%12 -6)*M_PI/6);
+    _birds[0].reset(0,0,rand_a());
+    double theta = (double) rand()/RAND_MAX * 2 * M_PI; //Random theta in polar coordinates
     for(std::size_t i=1; i< _birds.size(); ++i){
-        //_birds[i].reset(2*i + 1, 3*i + 5, (rand()%12 -6)*M_PI/6);
-        _birds[i].reset((double)rand()/RAND_MAX+3, (double)rand()/RAND_MAX+4, (rand()%12 -6)*M_PI/6);
+        //_birds[i].reset(rand_x(), rand_y(), rand_a());
+        _birds[i].reset(10, theta);
     }
 }
+
+double State::rand_x(){
+    return (double)rand()/RAND_MAX+10;
+}
+
+double State::rand_y(){
+    return (double)rand()/RAND_MAX+10;
+}
+
+double State::rand_a(){
+    return (rand()%12 -6)*M_PI/6;
+}
+

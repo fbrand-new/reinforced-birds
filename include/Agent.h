@@ -13,9 +13,7 @@ class Agent{
 
     private:
         std::size_t _id; //This is the id of the bird so that we can actually observe the others!
-        Observable _o; //TODO:we need two of this: one to take into consideration predators, one preys
-        //Observable _o_preys;
-        //Policy * _p;
+        Observable _o; //TODO:this need to yield two sectors
         std::unique_ptr<Policy> _p;
         double _vision_range;
         double _vision_angle;
@@ -26,15 +24,16 @@ class Agent{
         Agent();
         Agent(Policy &p);
         Agent(double vision_range, double vision_angle);
-        //Agent(std::size_t id, Policy &p);
 
         //Getters
         std::size_t& get_id() {return _id;}
-        Observable& get_observable() {return _o;}
+        Observable& get_obs() {return _o;}
         auto& get_policy() {return _p;}
 
         //Setters
         void set_id(std::size_t &i) {_id = i;}
+        void set_vision_range(double vision_range) {_vision_range = vision_range;}
+        void set_vision_angle(double vision_angle) {_vision_angle = vision_angle;}
 
         template <typename T>
         void set_policy(Policy &&p) {_p = std::make_unique<T>(p);} 
@@ -49,7 +48,6 @@ class Agent{
         //Utilities function
         static double relative_distance(const Bird &a, const Bird &b);
         static double relative_angle(const Bird &a, const Bird &b);
-
 };
 
 
