@@ -12,10 +12,17 @@ class State{
 
     private:
         std::vector<Bird> _birds;
+        std::size_t _pursuers_num;
 
     public:
+
+        //Ctors
         State(unsigned int i);
+
+        //Getters
         auto & get_birds() const {return _birds;}
+        std::size_t get_pursuer_num() const {return _pursuers_num;}
+
         auto size() const {return _birds.size();}
         void update(double velocity, double angle, unsigned int i);
         void reset();

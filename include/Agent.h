@@ -2,6 +2,7 @@
 #define __AGENT_H_
 
 #include "State.h"
+#include "Timer.h"
 #include "Observable.h"
 #include "Action.h"
 #include "Policy.h"
@@ -17,6 +18,7 @@ class Agent{
         std::unique_ptr<Policy> _p;
         double _vision_range;
         double _vision_angle;
+        std::vector<double> _vision_sectors;
 
     public:
 
@@ -34,6 +36,7 @@ class Agent{
         void set_id(std::size_t &i) {_id = i;}
         void set_vision_range(double vision_range) {_vision_range = vision_range;}
         void set_vision_angle(double vision_angle) {_vision_angle = vision_angle;}
+        void set_vision_sectors();
 
         template <typename T>
         void set_policy(Policy &&p) {_p = std::make_unique<T>(p);} 
@@ -48,6 +51,8 @@ class Agent{
         //Utilities function
         static double relative_distance(const Bird &a, const Bird &b);
         static double relative_angle(const Bird &a, const Bird &b);
+        std::size_t obs_bird(const Bird &me, const Bird &b, const std::size_t sectors_num, const std::vector<bool> &sector_occupied);
+        //std::size_t obs_bird(const Bird &me, const Bird &b, std::size_t sectors_num);
 };
 
 

@@ -1,7 +1,8 @@
 #include "State.h"
 
 State::State(unsigned int i):
-    _birds(i, Bird::random_bird(10,0))
+    _birds(i, Bird::random_bird(10,0)),
+    _pursuers_num{1}
     //_birds(i,Bird(rand_x(), rand_y(), rand_a(),Species::evader))
     {
         _birds[0].reset(0,0,rand_a());

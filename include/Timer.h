@@ -1,3 +1,6 @@
+#ifndef __TIMER_H_
+#define __TIMER_H_
+
 #include <chrono>
 #include <iostream>
 
@@ -11,3 +14,5 @@ class Timer{
         ~Timer();
         void stop();
 };
+
+#endif

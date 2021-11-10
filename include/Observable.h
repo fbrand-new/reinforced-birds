@@ -5,7 +5,7 @@
 #include <math.h>
 #include <fstream>
 
-enum class observed{none, pursuer, evader, both};
+//enum class observed{none, pursuer, evader, both};
 
 class Observable{
 
@@ -28,8 +28,8 @@ class Observable{
 
         void empty_sector(unsigned int i);
         void non_empty_sector(unsigned int i);
-        void non_empty_sector(unsigned int i, bool pred);
-        void non_empty_sector(unsigned int i, observed o);
+        //void non_empty_sector(unsigned int i, bool pred);
+        void non_empty_sector(unsigned int i, unsigned int s);
 };
 
 std::ostream& operator <<(std::ostream & os, Observable &o);

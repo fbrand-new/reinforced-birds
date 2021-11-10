@@ -51,15 +51,15 @@ void Observable::non_empty_sector(unsigned int i){
     _o[i] = 1;
 }
 
-void Observable::non_empty_sector(unsigned int i, bool pred){
-    if(pred)
-        _o[i] = _max_val;
-    else
-        _o[i] = 1;
-}
+// void Observable::non_empty_sector(unsigned int i, bool pred){
+//     if(pred)
+//         _o[i] = _max_val;
+//     else
+//         _o[i] = 1;
+// }
 
-void Observable::non_empty_sector(unsigned int i, observed o){
-    _o[i] = static_cast<int>(o);
+void Observable::non_empty_sector(unsigned int i, unsigned int s){
+    _o[i] = s;
 }
 
 std::ostream& operator <<(std::ostream & os, Observable &o){

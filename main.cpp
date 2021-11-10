@@ -39,7 +39,7 @@ int main(){
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
-    std::size_t num_of_birds = 100;
+    std::size_t num_of_birds = 5;
     constexpr std::size_t sectors_num = 5;
     const std::size_t state_space_dim = pow(3, sectors_num);
     //The first one is the pursuer, the other are evaders
@@ -159,31 +159,16 @@ int main(){
 
             //All agents get an observation based on the current state and return an action
             
-            {
-                std::cout << "Act" << std::endl;
-                Timer timethis;
-                for(std::size_t i = 0; i < agents.size(); ++i){
-                    a[i] = (agents[i].act(*prev_state, *prev_obs[i]));
-                }
+            for(std::size_t i = 0; i < agents.size(); ++i){
+                a[i] = (agents[i].act(*prev_state, *prev_obs[i]));
             }
-
-            {
-                std::cout << "Move" << std::endl;
-                Timer timethis;
-                next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
-            }
+            next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
             
-            {
-                std::cout << "Observe" << std::endl;
-                Timer timethis;
-                for(std::size_t i=0; i<num_of_birds; ++i)
-                    next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
-            }
+            for(std::size_t i=0; i<num_of_birds; ++i)
+                next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
 
             r = env.reward(*prev_state, static_cast<double>(episode_length));
             
-
-
             //Check if episode is over:
             if(std::get<1>(r) == 1){
                 for(std::size_t i=0; i<num_of_birds; ++i){
@@ -201,26 +186,17 @@ int main(){
                 break; 
             }
 
-            {
-                std::cout << "Value update" << std::endl;
-                Timer timethis;
-                for(std::size_t i=0; i<num_of_birds; ++i){
-                    delta[i] = std::get<0>(r)[i] + gamma*v[i][*next_obs[i]] - v[i][*prev_obs[i]];
-                    v[i][*prev_obs[i]] += alpha_w*delta[i]; //V values update
-                }     
-            }
+            for(std::size_t i=0; i<num_of_birds; ++i){
+                delta[i] = std::get<0>(r)[i] + gamma*v[i][*next_obs[i]] - v[i][*prev_obs[i]];
+                v[i][*prev_obs[i]] += alpha_w*delta[i]; //V values update
+            }     
          
-
-            //Theta values update
-            {
-                std::cout << "Theta update" << std::endl;
-                Timer timethis;
-                if(ag_l == 0){
-                    agents[ag_l].update_policy(alpha_t*delta[ag_l], *prev_obs[ag_l], a[ag_l]);
-                } else{
-                    for(auto j=1; j<num_of_birds; ++j)
-                        agents[j].update_policy(alpha_t*delta[j], *prev_obs[j], a[j]);
-                }
+            //Theta values updates
+            if(ag_l == 0){
+                agents[ag_l].update_policy(alpha_t*delta[ag_l], *prev_obs[ag_l], a[ag_l]);
+            } else{
+                for(auto j=1; j<num_of_birds; ++j)
+                    agents[j].update_policy(alpha_t*delta[j], *prev_obs[j], a[j]);
             }
 
             
