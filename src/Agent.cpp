@@ -31,13 +31,16 @@ void Agent::set_vision_sectors(){
 //and predators
 Observable Agent::obs(State &s){
 
+    //Timer timethis;
     std::size_t sectors_num = this->_o.get_sectors_num();
     auto birds = s.get_birds();
     std::size_t pursuers_num = s.get_pursuer_num(); //This is also the index of the first prey!
     std::size_t me_id = this->get_id();
     auto me = birds[me_id];
 
-    //
+    double sin_alpha = sin(me.get_alpha());
+    double cos_alpha = cos(me.get_alpha());
+
     std::vector<bool> sector_occupied(sectors_num);
     std::size_t num_sectors_occupied;
     
@@ -57,7 +60,7 @@ Observable Agent::obs(State &s){
             if(num_sectors_occupied == sectors_num)
                 return _o;
 
-            auto temp_obs = obs_bird(me, birds[k], sectors_num, sector_occupied); //If non 0 is the occupied sector
+            auto temp_obs = obs_bird(me, birds[k], sin_alpha, cos_alpha, sectors_num, sector_occupied); //If non 0 is the occupied sector
 
             if(temp_obs==0){
                 continue;
@@ -74,7 +77,7 @@ Observable Agent::obs(State &s){
             if(num_sectors_occupied == sectors_num)
                 return _o;
 
-            auto temp_obs = obs_bird(me, birds[k], sectors_num, sector_occupied); //If non 0 is the occupied sector
+            auto temp_obs = obs_bird(me, birds[k], sin_alpha, cos_alpha, sectors_num, sector_occupied); //If non 0 is the occupied sector
 
             if(temp_obs==0){
                 continue;
@@ -91,7 +94,7 @@ Observable Agent::obs(State &s){
             if(num_sectors_occupied == sectors_num)
                 return _o;
 
-            auto temp_obs = obs_bird(me, birds[k], sectors_num, sector_occupied); //If non 0 is the occupied sector
+            auto temp_obs = obs_bird(me, birds[k], sin_alpha, cos_alpha, sectors_num, sector_occupied); //If non 0 is the occupied sector
 
             if(temp_obs==0){
                 continue;
@@ -110,7 +113,7 @@ Observable Agent::obs(State &s){
             if(num_sectors_occupied == sectors_num)
                 return _o;
 
-            auto temp_obs = obs_bird(me, birds[k], sectors_num, sector_occupied); //If non 0 is the occupied sector
+            auto temp_obs = obs_bird(me, birds[k], sin_alpha, cos_alpha, sectors_num, sector_occupied); //If non 0 is the occupied sector
 
             if(temp_obs==0){
                 continue;
@@ -127,7 +130,7 @@ Observable Agent::obs(State &s){
             if(num_sectors_occupied == sectors_num)
                 return _o;
 
-            auto temp_obs = obs_bird(me, birds[k], sectors_num, sector_occupied); //If non 0 is the occupied sector
+            auto temp_obs = obs_bird(me, birds[k], sin_alpha, cos_alpha, sectors_num, sector_occupied); //If non 0 is the occupied sector
 
             if(temp_obs==0){
                 continue;
@@ -138,13 +141,13 @@ Observable Agent::obs(State &s){
             }   
         }
 
-        //Predator sees predators, from itself to total number of pursuers
+        //Prey see preys, from itself to total number of pursuers
         for(std::size_t k=me_id+1; k<birds.size(); ++k){
         
             if(num_sectors_occupied == sectors_num)
                 return _o;
 
-            auto temp_obs = obs_bird(me, birds[k], sectors_num, sector_occupied); //If non 0 is the occupied sector
+            auto temp_obs = obs_bird(me, birds[k], sin_alpha, cos_alpha, sectors_num, sector_occupied); //If non 0 is the occupied sector
 
             if(temp_obs==0){
                 continue;
@@ -177,28 +180,26 @@ double Agent::relative_distance(const Bird &a, const Bird &b){
     
 }
 
-double Agent::relative_angle(const Bird &a, const Bird &b){
-
-    double alpha = a.get_alpha();
+double Agent::relative_angle(const double sin_alpha, const double cos_alpha, const Bird &a, const Bird &b){
 
     //Centering the system on Bird a
     double x_rel = b.get_x() - a.get_x();
     double y_rel = b.get_y() - a.get_y();
 
     //Clockwise rotation of the system towards Bird a orientation
-    double x_prime = cos(-alpha)*x_rel - sin(-alpha)*y_rel;
-    double y_prime = sin(-alpha)*x_rel + cos(-alpha)*y_rel;
+    double x_prime = sin_alpha*x_rel - cos_alpha*y_rel;
+    double y_prime = cos_alpha*x_rel + sin_alpha*y_rel;
     
     return atan2(y_prime, x_prime);
 }
 
-std::size_t Agent::obs_bird(const Bird &me, const Bird &b, const std::size_t sectors_num, const std::vector<bool> &sector_occupied){
+std::size_t Agent::obs_bird(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha, const std::size_t sectors_num, const std::vector<bool> &sector_occupied){
     
     if (relative_distance(me, b) > _vision_range*_vision_range)
         return 0; 
     
-    auto rel_angle = relative_angle(me, b);
-
+    double rel_angle = relative_angle(sin_alpha, cos_alpha, me, b);
+  
     if(rel_angle < _vision_sectors[0])
         return 0; //Out of vision cone
 

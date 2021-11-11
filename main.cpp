@@ -39,7 +39,7 @@ int main(){
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
-    std::size_t num_of_birds = 5;
+    std::size_t num_of_birds = 100;
     constexpr std::size_t sectors_num = 5;
     const std::size_t state_space_dim = pow(3, sectors_num);
     //The first one is the pursuer, the other are evaders
@@ -164,8 +164,13 @@ int main(){
             }
             next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
             
-            for(std::size_t i=0; i<num_of_birds; ++i)
-                next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
+            {
+                Timer timethis;
+                for(std::size_t i=0; i<num_of_birds; ++i)
+                    next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
+            }
+
+
 
             r = env.reward(*prev_state, static_cast<double>(episode_length));
             
@@ -183,7 +188,7 @@ int main(){
                     agents[0].update_policy(alpha_t*delta[0], *prev_obs[0], a[0]); 
                 }
                     
-                break; 
+                break;
             }
 
             for(std::size_t i=0; i<num_of_birds; ++i){

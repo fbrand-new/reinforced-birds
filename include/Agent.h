@@ -50,8 +50,8 @@ class Agent{
 
         //Utilities function
         static double relative_distance(const Bird &a, const Bird &b);
-        static double relative_angle(const Bird &a, const Bird &b);
-        std::size_t obs_bird(const Bird &me, const Bird &b, const std::size_t sectors_num, const std::vector<bool> &sector_occupied);
+        static double relative_angle(const double sin_alpha, const double cos_alpha, const Bird &a, const Bird &b);
+        std::size_t obs_bird(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha, const std::size_t sectors_num, const std::vector<bool> &sector_occupied);
         //std::size_t obs_bird(const Bird &me, const Bird &b, std::size_t sectors_num);
 };
 

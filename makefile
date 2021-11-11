@@ -1,6 +1,6 @@
 EXE = main.x
 CXX = g++
-CXXFLAGS = -I include -std=c++14 -Wall
+CXXFLAGS = -I include -std=c++14 -Wall -O3
 #CXXFLAGS = -I include -std=c++14 -Wall -ggdb -O3
 #CXXFLAGS = -I include -std=c++14 -Wall -O3
 

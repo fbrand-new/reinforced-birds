@@ -82,7 +82,7 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length){
 
 
     for(std::size_t i=1; i<s.size(); ++i){
-        if(Agent::relative_distance(predator, s.get_birds()[i]) < _capture_range){
+        if(Agent::relative_distance(predator, s.get_birds()[i]) < _capture_range*_capture_range){
             //break;
             // r[0] = 1;
             r[i] = -episode_length;
