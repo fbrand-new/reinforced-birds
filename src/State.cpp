@@ -15,12 +15,22 @@ void State::update(double velocity, double angle, unsigned int i){
 
 }
 
+void State::reset(){
+
+    _birds[0].reset(0,0,rand_a());
+    double theta = (double) rand()/RAND_MAX * 2 * M_PI; //Random theta in polar coordinates
+    for(std::size_t i=1; i< _birds.size(); ++i){
+        //_birds[i].reset(rand_x(), rand_y(), rand_a());
+        _birds[i].reset(10, theta);
+    }
+}
+
 std::ofstream& operator <<(std::ofstream & os, State &s){
 
     auto birds = s.get_birds();
 
     for(std::size_t i=0; i< birds.size(); ++i){
-        os << birds[i].get_x() << "," << birds[i].get_y();
+        os << birds[i].get_x() << "," << birds[i].get_y() << "," << birds[i].get_alpha();
         if(i<birds.size()-1) 
             os << ",";
     }
@@ -34,23 +44,13 @@ std::ostream& operator <<(std::ostream & os, State &s){
     auto birds = s.get_birds();
 
     for(std::size_t i=0; i< birds.size(); ++i){
-        os << birds[i].get_x() << "," << birds[i].get_y();
+        os << birds[i].get_x() << "," << birds[i].get_y() << "," << birds[i].get_alpha();
         if(i<birds.size()-1) 
             os << ",";
     }
     
     os << std::endl;
     return os;
-}
-
-void State::reset(){
-
-    _birds[0].reset(0,0,rand_a());
-    double theta = (double) rand()/RAND_MAX * 2 * M_PI; //Random theta in polar coordinates
-    for(std::size_t i=1; i< _birds.size(); ++i){
-        //_birds[i].reset(rand_x(), rand_y(), rand_a());
-        _birds[i].reset(10, theta);
-    }
 }
 
 double State::rand_x(){
@@ -62,6 +62,6 @@ double State::rand_y(){
 }
 
 double State::rand_a(){
-    return (rand()%12 -6)*M_PI/6;
+    return (rand()%12)*M_PI/6;
 }
 

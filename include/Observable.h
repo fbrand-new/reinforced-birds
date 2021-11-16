@@ -33,5 +33,6 @@ class Observable{
 };
 
 std::ostream& operator <<(std::ostream & os, Observable &o);
+std::ofstream& operator <<(std::ofstream & os, Observable &o);
 
 #endif

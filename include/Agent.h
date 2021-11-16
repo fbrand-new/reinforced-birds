@@ -43,6 +43,7 @@ class Agent{
 
         // Observable function definition
         Observable obs(State &s);
+        Observable obs_both(State &s);
         // Take an action according to a certain policy and the current observation
         Action act(State &s, Observable &o);
         // Update policy given an observable and action
@@ -52,6 +53,8 @@ class Agent{
         static double relative_distance(const Bird &a, const Bird &b);
         static double relative_angle(const double sin_alpha, const double cos_alpha, const Bird &a, const Bird &b);
         std::size_t obs_bird(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha, const std::size_t sectors_num, const std::vector<bool> &sector_occupied);
+        int obs_bird_both(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha, const std::size_t sectors_num, const std::vector<std::size_t> &sector_occupied);
+        
         //std::size_t obs_bird(const Bird &me, const Bird &b, std::size_t sectors_num);
 };
 

@@ -35,7 +35,7 @@ void Bird::reset(double r, double theta){
 
     this->_x = ((double) rand()/RAND_MAX + r)*cos(theta);
     this->_y = ((double) rand()/RAND_MAX + r)*sin(theta);
-    this->_alpha = (rand()%12 -6)*M_PI/6;
+    this->_alpha = (rand()%12)*M_PI/6;
 }
 
 Bird Bird::random_bird(double r, double theta){
@@ -43,7 +43,7 @@ Bird Bird::random_bird(double r, double theta){
     //double theta = (double) rand()/RAND_MAX * 2 * M_PI; //Random theta in polar coordinates
     double x = ((double) rand()/RAND_MAX + r)*cos(theta);
     double y = ((double) rand()/RAND_MAX + r)*sin(theta);
-    double alpha = (rand()%12 -6)*M_PI/6;
+    double alpha = (rand()%12)*M_PI/6;
 
     return Bird(x, y, alpha, Species::evader);
 }

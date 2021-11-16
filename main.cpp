@@ -9,6 +9,7 @@
 #include "V.h"
 #include "Signal.h"
 #include "Timer.h"
+#include <tuple>
 #include <utility>
 #include <string>
 #include <list>
@@ -34,22 +35,22 @@ int main(){
     //Environment params
     constexpr std::size_t action_num = 3;
     double steering_angle = M_PI/6;
-    double capture_range = 0.3;
+    double capture_range = 0.2;
     constexpr double gamma = 1;
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
-    std::size_t num_of_birds = 100;
+    std::size_t num_of_birds = 3;
     constexpr std::size_t sectors_num = 5;
-    const std::size_t state_space_dim = pow(3, sectors_num);
+    const std::size_t state_space_dim = pow(4, sectors_num);
     //The first one is the pursuer, the other are evaders
 
     //Learning rates
-    double alpha_w = 0.01;
-    double alpha_t = 0.0001;
+    double alpha_w = 0.1;
+    double alpha_t = 0.01;
 
     //Decide the episode length
-    std::size_t episodes_num = 10000;
+    std::size_t episodes_num = 40000;
     std::size_t episode_length = 500;
 
     //Print the environment and training information into a log file
@@ -76,10 +77,13 @@ int main(){
     for(std::size_t i = 0; i < agents.size(); ++i ){
         agents[i].set_id(i);
         agents[i].set_policy<Boltzmann>(Boltzmann(state_space_dim, 3));
+        agents[i].set_vision_sectors();
     }
 
     for(std::size_t i = 1; i < agents.size(); ++i ){
-        agents[i].set_vision_range(5);
+        agents[i].set_vision_range(7);
+        agents[i].set_vision_angle(3./2*M_PI);
+        agents[i].set_vision_sectors();
     }
     
     //Bunch of pointers to keep track of value during the run and avoiding hard copying
@@ -96,11 +100,13 @@ int main(){
 
     //Matrix storing data
     std::list<std::pair<std::size_t,State>> traj;
+    std::list<std::tuple<std::size_t,std::size_t, Observable>> record_obs;
     std::list<std::vector<std::size_t>> t_ep;
     Eigen::MatrixXd value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), 4*num_of_birds);
 
     //Output files of the simulation
     std::ofstream traj_file;
+    std::ofstream obs_file;
     std::ofstream episode_file;
     std::ofstream value_policy_file;
 
@@ -110,11 +116,17 @@ int main(){
     //Header construction
     traj_file << "Episode" << ",";
     for(std::size_t i=0; i<num_of_birds; ++i){
-        traj_file << "x" << i << ",y" << i;
+        traj_file << "x" << i << ",y" << i << ",alpha" << i;
         if(i<num_of_birds-1) 
             traj_file << ",";
     }
     traj_file << "\n";
+
+
+    obs_file.open("data/observations.csv");
+    obs_file << "episode" << "," << "bird" << ",";
+    obs_file << "sec1" << ",sec2_" << ",sec3_" << ",sec4_" << ",sec5_";
+    obs_file << "\n";
 
     episode_file.open("data/episode.csv");
     episode_file << "Episode,EndTime,PredatorTraining" << std::endl;
@@ -141,11 +153,11 @@ int main(){
         env.reset();
         prev_state = std::make_shared<State>(env.get_state());
 
-        for(std::size_t i=0; i<num_of_birds; ++i)
-            prev_obs[i] = std::make_shared<Observable>(agents[i].obs(*prev_state));
-
-    
-        if (ep < 30000){
+        for(std::size_t i=0; i<num_of_birds; ++i){
+            prev_obs[i] = std::make_shared<Observable>(agents[i].obs_both(*prev_state));
+        }
+             
+        if (ep < 60000){
             ag_l = pred_training.step(ep);
         } else {
             ag_l = 1; //From a certain point onward, we do learning only on preys
@@ -154,8 +166,12 @@ int main(){
         while(t < episode_length){
             
             //traj_file << *prev_state;
-            if(ep%1000 == 0)
+            if(ep%1000 == 0){
                 traj.push_back(std::make_pair(ep,*prev_state));
+                for(std::size_t i = 0; i<num_of_birds; ++i)
+                    record_obs.push_back(std::make_tuple(ep,i,*prev_obs[i]));
+            }
+                
 
             //All agents get an observation based on the current state and return an action
             
@@ -164,12 +180,10 @@ int main(){
             }
             next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
             
-            {
-                Timer timethis;
-                for(std::size_t i=0; i<num_of_birds; ++i)
-                    next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
+            for(std::size_t i=0; i<num_of_birds; ++i){
+                //next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
+                next_obs[i] = std::make_shared<Observable>(agents[i].obs_both(*next_state));
             }
-
 
 
             r = env.reward(*prev_state, static_cast<double>(episode_length));
@@ -232,8 +246,15 @@ int main(){
 
     }
 
-    for(auto it1=traj.begin(); it1!=traj.end(); ++it1)
+    for(auto it1=traj.begin(); it1!=traj.end(); ++it1){
         traj_file << std::get<0>(*it1) << "," << std::get<1>(*it1); //<< "\n";
+    }
+
+    for(auto it1=record_obs.begin(); it1!=record_obs.end(); ++it1){
+        obs_file << std::get<0>(*it1) << "," << std::get<1>(*it1) << ","
+                 << std::get<2>(*it1) << std::endl;
+    }
+        
 
     for(auto it=t_ep.begin(); it!=t_ep.end(); ++it)
         episode_file << (*it)[0] << "," << (*it)[1] << "," << (*it)[2] << "\n";
@@ -247,6 +268,7 @@ int main(){
     traj_file.close();
     episode_file.close();
     value_policy_file.close();
+    obs_file.close();
     return 0;
 }
 

@@ -66,10 +66,24 @@ std::ostream& operator <<(std::ostream & os, Observable &o){
 
     auto obs = o.get_obs();
 
-    for(std::size_t i=0; i<o.get_sectors_num(); ++i){
-        os << obs[i];
+    for(std::size_t i=0; i<o.get_sectors_num()-1; ++i){
+        os << obs[i] << ",";
     }
+    os << obs[o.get_sectors_num()-1];
 
-    os << std::endl;
+    //os << std::endl;
+    return os;
+}
+
+std::ofstream& operator <<(std::ofstream & os, Observable &o){
+
+    auto obs = o.get_obs();
+
+    for(std::size_t i=0; i<o.get_sectors_num()-1; ++i){
+        os << obs[i] << ",";
+    }
+    os << obs[o.get_sectors_num()-1];
+
+    //os << std::endl;
     return os;
 }
