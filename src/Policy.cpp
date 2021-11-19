@@ -4,14 +4,16 @@
 
 //This should initialize a random matrix with coefficients \in [0,1]
 //Let's initialize instead a truly random policy
-Policy::Policy(size_t rows, size_t cols):
-    _params{Eigen::MatrixXd(rows, cols)}
+Policy::Policy(size_t r, size_t c):
+    _params(r, std::vector<double>(c)),
+    rows{r},
+    cols{c}
     {
         //We initialize a stochastic matrix
         for(std::size_t i=0; i<rows; i++){
             for(std::size_t j=0; j<cols; j++){
                 double l = 0.1;
-                _params(i,j) = l;
+                _params[i][j] = l;
             }
         }
     }
@@ -37,11 +39,11 @@ Policy& Policy::operator=(Policy &&p){
 }
 
 double Policy::get(const std::size_t row, const std::size_t col){
-    return _params(row, col);
+    return _params[row][col];
 }
 
-Eigen::MatrixXd Policy::get_row(const std::size_t row){
-    return _params.row(row);
+std::vector<double> Policy::get_row(const std::size_t row){
+    return _params[row];
 }
 
 Action Policy::decide(Observable &o){
@@ -56,9 +58,26 @@ void Policy::update(double coeffs, Observable &o, Action &a){
 Action Policy::randomAction(){
 
     std::random_device rd;
-    std::mt19937 mt(rd);
+    std::mt19937 mt(rd());
     std::uniform_int_distribution<int> unif(0,2);
 
     return static_cast<Action>(unif(mt));
 
+}
+
+void Policy::set_params(std::vector<std::vector<double>> pars){
+
+    for(std::size_t i=0; i<rows; ++i){
+        for(std::size_t j=0; j<cols; ++j)
+            _params[i][j] = pars[i][j];
+    }
+}
+
+
+void Policy::set_param(std::size_t row, std::size_t col, double par){
+    _params[row][col] = par;
+}
+     
+void Policy::update_param(std::size_t row, std::size_t col, double par){
+    _params[row][col] += par;
 }

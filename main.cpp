@@ -43,17 +43,17 @@ int main(){
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
     //The first one is the pursuer, the other are evaders
-    std::size_t num_of_birds = 100;
+    std::size_t num_of_birds = 2;
     std::size_t sectors_num = 3;
     std::size_t states_per_sector = 2;
     const std::size_t state_space_dim = pow(states_per_sector, sectors_num);
     
     //Learning rates
-    double alpha_w = 0.001;
-    double alpha_t = 0.0001;
+    double alpha_w = 0.01;
+    double alpha_t = 0.001;
 
     //Decide the episode length
-    std::size_t episodes_num = 120000;
+    std::size_t episodes_num = 20000;
     std::size_t episode_length = 500;
 
     //Print the environment and training information into a log file
@@ -76,14 +76,11 @@ int main(){
     Environment env(num_of_birds, 0.1, capture_range, steering_angle); //How many birds
 
     //Agents initialization
-    //Agent lmao(sectors_num, states_per_sector, vision_range, vision_angle);
-    //std::vector<Agent> agents(num_of_birds, Agent(vision_range, vision_angle));
     std::vector<Agent> agents;
     for(std::size_t i=0; i<num_of_birds; ++i){
         agents.push_back(Agent(sectors_num, states_per_sector, vision_range, vision_angle));
     }
     
-    //std::vector<Agent> agents(num_of_birds);
     for(std::size_t i = 0; i < agents.size(); ++i ){
         agents[i].set_id(i);
         agents[i].set_policy<Boltzmann>(Boltzmann(state_space_dim, 3));
@@ -102,16 +99,18 @@ int main(){
     std::vector<Action> a(num_of_birds);
     std::vector<std::shared_ptr<Observable>> prev_obs(num_of_birds);
     std::vector<std::shared_ptr<Observable>> next_obs(num_of_birds);
+    //TODO: remove eigen from v
     std::vector<V> v(num_of_birds, V(state_space_dim));
     std::vector<double> delta(num_of_birds);
     std::size_t ag_l; //The agent currently learning
     std::pair<Reward,bool> r; //Reward 
 
-    //Matrix storing data
+    //Storing data to open one single buffer at the end. Write to ram >> write to disk.
     std::list<std::pair<std::size_t,State>> traj;
     std::list<std::tuple<std::size_t,std::size_t, Observable>> record_obs;
     std::list<std::vector<std::size_t>> t_ep;
-    Eigen::MatrixXd value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), 4*num_of_birds);
+    std::vector<std::vector<double>> value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), std::vector<double>(4*num_of_birds));
+    //Eigen::MatrixXd value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), 4*num_of_birds);
 
     //Output files of the simulation
     std::ofstream traj_file;
@@ -177,27 +176,21 @@ int main(){
 
         while(t < episode_length){
             
-            //traj_file << *prev_state;
             if(ep%1000 == 0){
                 traj.push_back(std::make_pair(ep,*prev_state));
                 for(std::size_t i = 0; i<num_of_birds; ++i)
                     record_obs.push_back(std::make_tuple(ep,i,*prev_obs[i]));
             }
                 
-
             //All agents get an observation based on the current state and return an action
-
             for(std::size_t i = 0; i < agents.size(); ++i){
                 a[i] = (agents[i].act(*prev_state, *prev_obs[i]));
             }
             next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
             
-            for(std::size_t i=0; i<num_of_birds; ++i){
-                //next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state));
+            for(std::size_t i=0; i<num_of_birds; ++i)
                 next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state, setting));
-            } 
   
-
             r = env.reward(*prev_state, static_cast<double>(episode_length), num_of_birds-1);
 
             //Check if episode is over:
@@ -212,8 +205,7 @@ int main(){
                         agents[j].update_policy(alpha_t*delta[j], *prev_obs[j], a[j]); 
                 } else{
                     agents[0].update_policy(alpha_t*delta[0], *prev_obs[0], a[0]); 
-                }
-                    
+                }                  
                 break;
             }
             
@@ -245,10 +237,10 @@ int main(){
         if(ep%1000 == 0){
             for(std::size_t i=0; i < num_of_birds; ++i){
                 for(std::size_t k=0; k<state_space_dim; ++k){
-                    value_policy(static_cast<int>(ep/1000)*state_space_dim+k, i*4) = v[i][k];
-                    value_policy(static_cast<int>(ep/1000)*state_space_dim+k, i*4+1) = agents[i].get_policy()->get(k,0);
-                    value_policy(static_cast<int>(ep/1000)*state_space_dim+k, i*4+2) = agents[i].get_policy()->get(k,1);
-                    value_policy(static_cast<int>(ep/1000)*state_space_dim+k, i*4+3) = agents[i].get_policy()->get(k,2);
+                    value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4] = v[i][k];
+                    value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+1] = agents[i].get_policy()->get(k,0);
+                    value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+2] = agents[i].get_policy()->get(k,1);
+                    value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+3] = agents[i].get_policy()->get(k,2);
                 }
             }
         }
@@ -271,10 +263,10 @@ int main(){
     for(auto it=t_ep.begin(); it!=t_ep.end(); ++it)
         episode_file << (*it)[0] << "," << (*it)[1] << "," << (*it)[2] << "\n";
 
-    for(auto i=0; i<value_policy.rows(); ++i){
+    for(std::size_t i=0; i<value_policy.size(); ++i){
         for(std::size_t j=0; j<4*num_of_birds-1; ++j)
-            value_policy_file << value_policy(i,j) << ",";
-        value_policy_file << value_policy(i,4*num_of_birds-1) << "\n";
+            value_policy_file << value_policy[i][j] << ",";
+        value_policy_file << value_policy[i][4*num_of_birds-1] << "\n";
     }
 
     traj_file.close();

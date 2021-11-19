@@ -11,20 +11,20 @@ Action Boltzmann::decide(Observable &o){
 
     std::size_t row = o.index();
     auto actions_pars = get_row(row);
-    std::size_t cols = actions_pars.cols();
+    std::size_t cols = actions_pars.size();
 
     std::vector<double> probabilities(cols);
     double mean=0;
     double den=0;
 
-    for(std::size_t i=0; i<cols; i++){
-        mean+=actions_pars(0,i);
+    for(auto a:actions_pars){
+        mean+=a;
     }
 
     mean /= cols;
 
     for(std::size_t i=0; i<cols; ++i){
-        probabilities[i] = actions_pars(0,i) - mean;
+        probabilities[i] = actions_pars[i] - mean;
         den+=exp(probabilities[i]);
     }
     
@@ -45,13 +45,13 @@ void Boltzmann::update(double coeffs, Observable &o, Action &a){
     double mean=0;
 
     for(std::size_t i=0; i<3; i++){
-        mean+=_params(row,i);
+        mean+=get(row,i);
     }
     mean /= 3;
 
     double normalization = 0;
     for(std::size_t c=0; c<3; c++){
-        probabilities[c] = _params(row,c) - mean;
+        probabilities[c] = get(row,c) - mean;
         normalization += exp(probabilities[c]);
     }
     
@@ -67,7 +67,8 @@ void Boltzmann::update(double coeffs, Observable &o, Action &a){
     // }
 
     //Natural gradient
-    _params(row, col) += coeffs/(policy_row_col+0.001);
+    update_param(row,col, coeffs/(policy_row_col+0.001));
+    //_params(row, col) += coeffs/(policy_row_col+0.001);
 
 }
 

@@ -3,19 +3,21 @@
 
 #include "Action.h"
 #include "Observable.h"
-#include <Eigen/Dense>
 #include <cstdlib>
 
 class Policy{
 
     protected:
-        Eigen::MatrixXd _params;
+        std::vector<std::vector<double>> _params;
+        //Eigen::MatrixXd _params;
 
     public:
+        std::size_t rows;
+        std::size_t cols;
 
         //Constructors
         Policy() = default;
-        Policy(size_t rows, size_t cols);
+        Policy(size_t r, size_t c);
         Policy(const Policy &p);
 
         //Copy assignment
@@ -29,12 +31,17 @@ class Policy{
         ~Policy(){};
 
         //Getter
-        Eigen::MatrixXd get_params() const {return _params;}
+        //Eigen::MatrixXd get_params() const {return _params;}
+        std::vector<std::vector<double>> get_params() const {return _params;}
         double get(const std::size_t row, const std::size_t col);
-        Eigen::MatrixXd get_row(const std::size_t row);
+        std::vector<double> get_row(const std::size_t row);
+        //Eigen::MatrixXd get_row(const std::size_t row);
 
         //Setter
-        void set_params(Eigen::MatrixXd pars) {_params = pars;}
+        //void set_params(Eigen::MatrixXd pars) {_params = pars;}
+        void set_params(std::vector<std::vector<double>> pars);
+        void set_param(std::size_t row, std::size_t col, double par); //Sets param to par
+        void update_param(std::size_t row, std::size_t col, double par); //Adds par to param
         
         virtual Action decide(Observable &o);
         virtual void update(double coeffs, Observable &o, Action &a);
