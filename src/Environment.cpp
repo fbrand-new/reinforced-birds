@@ -70,7 +70,7 @@ State Environment::dynamics(std::vector<Action> a, State& s){
 //     return r;
 // }
 
-std::pair<Reward,bool> Environment::reward(State &s, double episode_length){
+std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int num_of_preys){
 
     Reward r(s.size());
     bool episode_over = 0;
@@ -80,15 +80,15 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length){
     //By default, we get a negative reward to predator
     r[0] = -1;
 
-
     for(std::size_t i=1; i<s.size(); ++i){
         if(Agent::relative_distance(predator, s.get_birds()[i]) < _capture_range*_capture_range){
-            //break;
-            // r[0] = 1;
+            // r[0] = episode_length;
+            // r[i] = -episode_length;
+            r[0] = episode_length;
             r[i] = -episode_length;
             episode_over=1;
         } else{
-            r[i] = 1;
+            r[i] = 1./(num_of_preys);
         }
     }
 

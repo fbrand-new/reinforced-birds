@@ -5,14 +5,12 @@
 #include <math.h>
 #include <fstream>
 
-//enum class observed{none, pursuer, evader, both};
+enum class Bird_in_scope{none, foe, brother, both};
 
 class Observable{
 
     private:
-        //It's better to have 0 in a sector if no one is there, 1 if there are preys
-        //2 if there is even a single predator
-        std::vector<unsigned int> _o;
+        std::vector<Bird_in_scope> _o;
         std::size_t _sectors;
         std::size_t _max_val;
 
@@ -21,15 +19,17 @@ class Observable{
         Observable(std::size_t sectors);
         Observable(std::size_t sectors, std::size_t max_val);
 
-        std::vector<unsigned int> get_obs();
+        //Getter
+        std::vector<Bird_in_scope> get_obs();
         std::size_t get_sectors_num();
         std::size_t get_max_val();
-        std::size_t index();
+        Bird_in_scope get_sector(std::size_t i) { return _o[i];}
+        
 
-        void empty_sector(unsigned int i);
-        void non_empty_sector(unsigned int i);
-        //void non_empty_sector(unsigned int i, bool pred);
-        void non_empty_sector(unsigned int i, unsigned int s);
+        //Setters
+        void set_sector(std::size_t i, Bird_in_scope b);
+
+        std::size_t index();
 };
 
 std::ostream& operator <<(std::ostream & os, Observable &o);

@@ -67,7 +67,7 @@ void Boltzmann::update(double coeffs, Observable &o, Action &a){
     // }
 
     //Natural gradient
-    _params(row, col) += coeffs/(policy_row_col+0.00001);
+    _params(row, col) += coeffs/(policy_row_col+0.001);
 
 }
 

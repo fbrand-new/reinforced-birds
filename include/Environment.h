@@ -31,7 +31,7 @@ class Environment
         State dynamics(std::vector<Action> a, State& s);
         State random_evader(std::vector<Action> a, State& s);
         State& get_state(){return _state;}
-        std::pair<Reward,bool> reward(State &s, double episode_length);
+        std::pair<Reward,bool> reward(State &s, double episode_length, int num_of_preys);
 
         void reset();
 

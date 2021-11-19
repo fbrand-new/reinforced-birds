@@ -38,6 +38,8 @@ class Policy{
         
         virtual Action decide(Observable &o);
         virtual void update(double coeffs, Observable &o, Action &a);
+
+        static Action randomAction();
 };
 
 #endif
