@@ -1,16 +1,25 @@
 #ifndef __RANDOMWALK_H_
 #define __RANDOMWALK_H_
 
-#include "Policy.h"
 #include <cstdlib>
+#include "Action.h"
+#include "Observable.h"
 
-class RandomWalk : public Policy{
+class RandomWalk{
 
     public:
         //Default ctor
-        RandomWalk(const Policy &p);
-        RandomWalk(const std::size_t rows, const std::size_t cols);
-        Action decide(Observable &o) override;
+        RandomWalk() = default;
+
+        template <typename T>
+        Action decide(Observable<T> &o);
+
 };
+
+template <typename T>
+Action RandomWalk::decide(Observable<T> &o){
+    return static_cast<Action>( rand() % (static_cast<int>(Action::right)+1));
+}
+
 
 #endif

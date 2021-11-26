@@ -1,6 +1,5 @@
 #include "Policy.h"
 #include <iostream>
-#include <random>
 
 //This should initialize a random matrix with coefficients \in [0,1]
 //Let's initialize instead a truly random policy

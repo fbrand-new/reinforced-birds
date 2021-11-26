@@ -25,7 +25,7 @@ State Environment::dynamics(std::vector<Action> a, State& s){
         //Slight speed advantage to evader -> This leads to linear evasion. Game over
         //Slight speed advantage to pursuer
         if(i==0){
-            v = _v0*1.5;
+            v = _v0*2;
         } else {
             v = _v0;
         }
@@ -48,28 +48,6 @@ State Environment::dynamics(std::vector<Action> a, State& s){
     return s;
 }
 
-//State Environment::random_evader(std::vector<Action> a, State& s);
-
-// Reward Environment::reward(State &s){
-
-//     Reward r(s.size());
-//     auto predator = s.get_birds()[0];
-
-//     //By default, we get a negative reward to predator
-//     r[0] = -1;
-
-//     for(std::size_t i=1; i<s.size(); ++i){
-//         if(Agent::relative_distance(predator, s.get_birds()[i]) < _capture_range){
-//             r[0] = 1;
-//             //r[1] = -1;
-//             break;
-//         } 
-//         r[i] = 1;
-//     }
-
-//     return r;
-// }
-
 std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int num_of_preys){
 
     Reward r(s.size());
@@ -81,7 +59,7 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int 
     r[0] = -1;
 
     for(std::size_t i=1; i<s.size(); ++i){
-        if(Agent::relative_distance(predator, s.get_birds()[i]) < _capture_range*_capture_range){
+        if(relative_distance_squared(predator, s.get_birds()[i]) < _capture_range*_capture_range){
             // r[0] = episode_length;
             // r[i] = -episode_length;
             r[0] = episode_length;

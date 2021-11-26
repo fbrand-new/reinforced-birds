@@ -3,7 +3,6 @@
 State::State(unsigned int i):
     _birds(i, Bird::random_bird(10,0)),
     _pursuers_num{1}
-    //_birds(i,Bird(rand_x(), rand_y(), rand_a(),Species::evader))
     {
         _birds[0].reset(0,0,rand_a());
         _birds[0].set_species(Species::pursuer);
@@ -62,6 +61,6 @@ double State::rand_y(){
 }
 
 double State::rand_a(){
-    return (rand()%12)*M_PI/6;
+    return (rand()%12)*M_PI/6 -M_PI;
 }
 

@@ -1,12 +1,20 @@
-#include "FixedPolicy.h"
+#ifndef __CHASE_H_
+#define __CHASE_H_
 
-FixedPolicy::FixedPolicy(const Policy &p) : Policy(p)
-    {}
+#include "Observable.h"
+#include "Action.h"
 
-FixedPolicy::FixedPolicy(const std::size_t rows, const std::size_t cols) : Policy(rows,cols)
-    {}
+class Chase{
 
-Action FixedPolicy::decide(Observable &o){
+    public:
+        Chase() = default;
+
+        template <typename T>
+        Action decide(Observable<T> &o);
+};
+
+template <typename T>
+Action Chase::decide(Observable<T> &o){
 
     std::size_t sectors_num = o.get_sectors_num();
     std::size_t straight = sectors_num/2;
@@ -23,6 +31,6 @@ Action FixedPolicy::decide(Observable &o){
     }
 
     return randomAction();
-
-        
 }
+
+#endif

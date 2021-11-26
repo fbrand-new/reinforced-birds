@@ -4,10 +4,8 @@
 #include <vector>
 #include "State.h"
 #include "Reward.h"
-#include "Agent.h" //This is needed in order to have the actions
-
-
-//TODO: the environment should know which agents are controlled from the external and which are not
+#include "Action.h"
+#include "Bird.h"
 
 class Environment
 {
@@ -31,10 +29,11 @@ class Environment
         State dynamics(std::vector<Action> a, State& s);
         State random_evader(std::vector<Action> a, State& s);
         State& get_state(){return _state;}
+
         std::pair<Reward,bool> reward(State &s, double episode_length, int num_of_preys);
-
         void reset();
-
 };
+
+
 
 #endif

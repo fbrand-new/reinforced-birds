@@ -1,14 +1,16 @@
 #include "State.h"
 #include "Observable.h"
-#include "Agent.h"
 #include "Environment.h"
 #include "Reward.h"
-#include "Policy.h"
 #include "RandomWalk.h"
 #include "Boltzmann.h"
+#include "Bird.h"
 #include "V.h"
 #include "Signal.h"
 #include "Timer.h"
+#include "Chase.h"
+#include "UndirectedAgent.h"
+#include "DirectedAgent.h"
 #include <tuple>
 #include <utility>
 #include <string>
@@ -29,6 +31,12 @@ Define:
 */
 // ----------------------------------- ---
 
+//Modify these typedefs in case you want to try a different observation mechanism
+
+using Obs = Observable<DirectedObs>;
+using BoltzmannAgt = DirectedAgent<Boltzmann>;
+//using ChaseAgt = UndirectedAgent<Chase>;
+
 // Main execution
 int main(){
 
@@ -38,14 +46,28 @@ int main(){
     double vision_angle = M_PI;
     double capture_range = 0.5;
     constexpr double gamma = 1;
+
     const Obs_setting setting = Obs_setting::foe_only;
+    std::size_t states_per_sector = 2;
+    
+    if(setting == Obs_setting::overwrite)
+        states_per_sector = 3;
+    else if(setting == Obs_setting::both)
+        states_per_sector = 4;
+
+    //Sets the corrects number of states per sector
+    //For the class UndirectedObs
+    UndirectedObs::set_size(states_per_sector); 
+
+    //This is in case we have directed observations
+    states_per_sector = states_per_sector*states_per_sector; 
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
-    //The first one is the pursuer, the other are evaders
-    std::size_t num_of_birds = 2;
-    std::size_t sectors_num = 3;
-    std::size_t states_per_sector = 2;
+    //The first one is the pursuer, the other are agents
+    std::size_t num_of_birds = 10;
+    std::size_t sectors_num = 5;
+    
     const std::size_t state_space_dim = pow(states_per_sector, sectors_num);
     
     //Learning rates
@@ -53,7 +75,7 @@ int main(){
     double alpha_t = 0.001;
 
     //Decide the episode length
-    std::size_t episodes_num = 20000;
+    std::size_t episodes_num = 200000;
     std::size_t episode_length = 500;
 
     //Print the environment and training information into a log file
@@ -61,7 +83,6 @@ int main(){
     log_file.open("data/env_info.csv");
     log_file << "episodes_num,episodes_length,num_of_birds,state_space_dim,episode_write_step" << std::endl;
     log_file << episodes_num << "," << episode_length << "," << num_of_birds << "," << state_space_dim << "," << 1000 << std::endl;
-
 
     //Instantiate a learning signal to alternate between preys and predator learning
     std::vector<std::size_t> learning_agent;
@@ -76,30 +97,31 @@ int main(){
     Environment env(num_of_birds, 0.1, capture_range, steering_angle); //How many birds
 
     //Agents initialization
-    std::vector<Agent> agents;
-    for(std::size_t i=0; i<num_of_birds; ++i){
-        agents.push_back(Agent(sectors_num, states_per_sector, vision_range, vision_angle));
+    //TODO: kind of confusing as of now
+    std::vector<BoltzmannAgt> agents;
+    for(std::size_t i=0; i < num_of_birds; ++i){
+        agents.push_back(BoltzmannAgt(sectors_num, states_per_sector, vision_range, vision_angle));
     }
     
     for(std::size_t i = 0; i < agents.size(); ++i ){
-        agents[i].set_id(i);
-        agents[i].set_policy<Boltzmann>(Boltzmann(state_space_dim, 3));
-        agents[i].set_vision_sectors();
-    }
-
-    for(std::size_t i = 1; i < agents.size(); ++i ){
         //agents[i].set_vision_range(15);
-        agents[i].set_vision_angle(2*M_PI);
+        agents[i].set_id(i);
+        agents[i].set_policy(Boltzmann(state_space_dim, 3));
+        agents[i].set_vision_angle(M_PI);
         agents[i].set_vision_sectors();
     }
     
+    for(std::size_t j=1; j < agents.size(); ++j){
+        agents[j].set_vision_angle(3./2*M_PI);
+        agents[j].set_vision_sectors();
+    }
+
     //Bunch of pointers to keep track of value during the run and avoiding hard copying
     std::shared_ptr<State> prev_state;
     std::shared_ptr<State> next_state;
     std::vector<Action> a(num_of_birds);
-    std::vector<std::shared_ptr<Observable>> prev_obs(num_of_birds);
-    std::vector<std::shared_ptr<Observable>> next_obs(num_of_birds);
-    //TODO: remove eigen from v
+    std::vector<std::shared_ptr<Obs>> prev_obs(num_of_birds);
+    std::vector<std::shared_ptr<Obs>> next_obs(num_of_birds);
     std::vector<V> v(num_of_birds, V(state_space_dim));
     std::vector<double> delta(num_of_birds);
     std::size_t ag_l; //The agent currently learning
@@ -107,7 +129,7 @@ int main(){
 
     //Storing data to open one single buffer at the end. Write to ram >> write to disk.
     std::list<std::pair<std::size_t,State>> traj;
-    std::list<std::tuple<std::size_t,std::size_t, Observable>> record_obs;
+    std::list<std::tuple<std::size_t,std::size_t, Obs>> record_obs;
     std::list<std::vector<std::size_t>> t_ep;
     std::vector<std::vector<double>> value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), std::vector<double>(4*num_of_birds));
     //Eigen::MatrixXd value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), 4*num_of_birds);
@@ -165,17 +187,18 @@ int main(){
         env.reset();
         prev_state = std::make_shared<State>(env.get_state());
 
-        for(std::size_t i=0; i<num_of_birds; ++i){
-            prev_obs[i] = std::make_shared<Observable>(agents[i].obs(*prev_state, setting));
+        for(std::size_t i=0; i<agents.size(); ++i){
+            prev_obs[i] = std::make_shared<Obs>(agents[i].obs(*prev_state, setting));
         }
         
-        if(ep < 10000)
+        //ag_l = pred_training.step(ep);
+        // if(ep < 100000)
             ag_l = pred_training.step(ep);
-        else
-            ag_l = 1;
+        // else
+        //     ag_l = 1;
 
         while(t < episode_length){
-            
+
             if(ep%1000 == 0){
                 traj.push_back(std::make_pair(ep,*prev_state));
                 for(std::size_t i = 0; i<num_of_birds; ++i)
@@ -188,9 +211,10 @@ int main(){
             }
             next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
             
-            for(std::size_t i=0; i<num_of_birds; ++i)
-                next_obs[i] = std::make_shared<Observable>(agents[i].obs(*next_state, setting));
+            for(std::size_t i=0; i<agents.size(); ++i)
+                next_obs[i] = std::make_shared<Obs>(agents[i].obs(*next_state, setting));
   
+            //TODO: conceptually it does not make sense that reward needs a template
             r = env.reward(*prev_state, static_cast<double>(episode_length), num_of_birds-1);
 
             //Check if episode is over:
@@ -222,7 +246,6 @@ int main(){
                     agents[j].update_policy(alpha_t*delta[j], *prev_obs[j], a[j]);
             }
 
-            
             //State update
             prev_state = next_state;
 

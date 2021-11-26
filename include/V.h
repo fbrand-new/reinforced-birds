@@ -11,8 +11,15 @@ class V{
 
     public:
         V(std::size_t size);
-        double& operator[](Observable &o);
+
+        template <typename T>
+        double& operator[](Observable<T> &o);
         double& operator[](std::size_t i);
 };
+
+template <typename T>
+double& V::operator[](Observable<T> &o){
+    return _w[o.index()];
+}
 
 #endif

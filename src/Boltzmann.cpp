@@ -1,76 +1,21 @@
 #include "Boltzmann.h"
 #include <iostream>
 
-Boltzmann::Boltzmann(const Policy &p) : Policy(p)
+Boltzmann::Boltzmann(const Boltzmann &p):
+    _params{p.get_params()}
     {}
 
-Boltzmann::Boltzmann(const std::size_t rows, const std::size_t cols): Policy(rows, cols)
+Boltzmann::Boltzmann(const std::size_t r, const std::size_t c):
+    _params(r, std::vector<double>(c,0.1)),
+    _rows{r},
+    _cols{c}
     {}
 
-Action Boltzmann::decide(Observable &o){
-
-    std::size_t row = o.index();
-    auto actions_pars = get_row(row);
-    std::size_t cols = actions_pars.size();
-
-    std::vector<double> probabilities(cols);
-    double mean=0;
-    double den=0;
-
-    for(auto a:actions_pars){
-        mean+=a;
-    }
-
-    mean /= cols;
-
-    for(std::size_t i=0; i<cols; ++i){
-        probabilities[i] = actions_pars[i] - mean;
-        den+=exp(probabilities[i]);
-    }
-    
-    for(std::size_t i=0; i<cols; i++){
-        probabilities[i] = exp(probabilities[i])/den;
-    }
-
-    return sample_discrete(probabilities);
-
-}
-
-void Boltzmann::update(double coeffs, Observable &o, Action &a){
-
-    std::size_t row = o.index();
-    std::size_t col = static_cast<std::size_t>(a);
-    
-    std::vector<double> probabilities(3);
-    double mean=0;
-
-    for(std::size_t i=0; i<3; i++){
-        mean+=get(row,i);
-    }
-    mean /= 3;
-
-    double normalization = 0;
-    for(std::size_t c=0; c<3; c++){
-        probabilities[c] = get(row,c) - mean;
-        normalization += exp(probabilities[c]);
-    }
-    
-    double policy_row_col = exp(probabilities[col])/normalization;
-
-    //Euclidean gradient
-    // for(std::size_t a=0; a<3; a++){
-    //     if(a==col){
-    //         _params(row, col) += coeffs*(1 - policy_row_col);
-    //     } else {
-    //         _params(row, a) += coeffs*policy_row_col;
-    //     }
-    // }
-
-    //Natural gradient
-    update_param(row,col, coeffs/(policy_row_col+0.001));
-    //_params(row, col) += coeffs/(policy_row_col+0.001);
-
-}
+Boltzmann::Boltzmann(Boltzmann &&b):
+    _params{std::move(b.get_params())},
+    _rows{std::move(b.get_rows())},
+    _cols{std::move(b.get_cols())}
+    {}
 
 Action Boltzmann::sample_discrete(std::vector<double> p){
 
