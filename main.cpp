@@ -47,7 +47,7 @@ int main(){
     double capture_range = 0.5;
     constexpr double gamma = 1;
 
-    const Obs_setting setting = Obs_setting::foe_only;
+    const Obs_setting setting = Obs_setting::overwrite;
     std::size_t states_per_sector = 2;
     
     if(setting == Obs_setting::overwrite)
@@ -60,12 +60,12 @@ int main(){
     UndirectedObs::set_size(states_per_sector); 
 
     //This is in case we have directed observations
-    states_per_sector = states_per_sector*states_per_sector; 
+    states_per_sector = states_per_sector*2; 
 
     //Decide the number of birds. 
     //Each of them is an agent, some of them will just use a fixed policy
     //The first one is the pursuer, the other are agents
-    std::size_t num_of_birds = 10;
+    std::size_t num_of_birds = 2;
     std::size_t sectors_num = 5;
     
     const std::size_t state_space_dim = pow(states_per_sector, sectors_num);
@@ -81,8 +81,10 @@ int main(){
     //Print the environment and training information into a log file
     std::ofstream log_file;
     log_file.open("data/env_info.csv");
-    log_file << "episodes_num,episodes_length,num_of_birds,state_space_dim,episode_write_step" << std::endl;
-    log_file << episodes_num << "," << episode_length << "," << num_of_birds << "," << state_space_dim << "," << 1000 << std::endl;
+    log_file << "episodes_num,episodes_length,num_of_birds,state_space_dim,episode_write_step,sectors,states_per_sector,is_directed" << std::endl;
+    log_file << episodes_num << "," << episode_length << "," << num_of_birds << "," << 
+             state_space_dim << "," << 1000 << "," << sectors_num << "," <<
+             static_cast<int>(sqrt(states_per_sector)) << "," << 1 <<  std::endl;
 
     //Instantiate a learning signal to alternate between preys and predator learning
     std::vector<std::size_t> learning_agent;
@@ -94,7 +96,7 @@ int main(){
     //---------------------------------------------------------------------------------
 
     //State initialization
-    Environment env(num_of_birds, 0.1, capture_range, steering_angle); //How many birds
+    Environment env(num_of_birds, 0.2, capture_range, steering_angle); //How many birds
 
     //Agents initialization
     //TODO: kind of confusing as of now
@@ -116,7 +118,7 @@ int main(){
         agents[j].set_vision_sectors();
     }
 
-    //Bunch of pointers to keep track of value during the run and avoiding hard copying
+    //Bunch of pointers to keep track of values during the run and avoiding hard copying
     std::shared_ptr<State> prev_state;
     std::shared_ptr<State> next_state;
     std::vector<Action> a(num_of_birds);
@@ -131,14 +133,16 @@ int main(){
     std::list<std::pair<std::size_t,State>> traj;
     std::list<std::tuple<std::size_t,std::size_t, Obs>> record_obs;
     std::list<std::vector<std::size_t>> t_ep;
-    std::vector<std::vector<double>> value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), std::vector<double>(4*num_of_birds));
-    //Eigen::MatrixXd value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), 4*num_of_birds);
+    //std::vector<std::vector<double>> value_policy(static_cast<unsigned int>(episodes_num*state_space_dim/1000), std::vector<double>(4*num_of_birds));
+    std::vector<std::vector<double>> value_policy(4*num_of_birds, std::vector<double>(static_cast<unsigned int>(episodes_num*state_space_dim/1000)));
+    
 
     //Output files of the simulation
     std::ofstream traj_file;
     std::ofstream obs_file;
     std::ofstream episode_file;
-    std::ofstream value_policy_file;
+    //std::ofstream value_policy_file;
+    std::vector<std::ofstream> value_policy_files(num_of_birds);
 
     //File initialization
     traj_file.open("data/pursuer_trajectory.csv");
@@ -164,18 +168,29 @@ int main(){
 
     episode_file.open("data/episode.csv");
     episode_file << "Episode,EndTime,PredatorTraining" << std::endl;
-    value_policy_file.open("data/value_policy.csv");
-    for(std::size_t i=0; i<num_of_birds-1; i++){
-        value_policy_file << "value_" + std::to_string(i) << ",";
-        value_policy_file << "left_" + std::to_string(i) << ",";
-        value_policy_file << "straight_" + std::to_string(i) << ",";
-        value_policy_file << "right_" + std::to_string(i) << ",";
+
+    for(std::size_t i=0; i<num_of_birds; ++i)
+    {
+     value_policy_files[i].open("data/value_policy"+std::to_string(i)+".csv");
+     value_policy_files[i] << "value,";
+     value_policy_files[i] << "left,";
+     value_policy_files[i] << "straight,";
+     value_policy_files[i] << "right";
+     value_policy_files[i] << std::endl;
     }
 
-    value_policy_file << "value_" + std::to_string(num_of_birds-1) << ",";
-    value_policy_file << "left_" + std::to_string(num_of_birds-1) << ",";
-    value_policy_file << "straight_" + std::to_string(num_of_birds-1) << ",";
-    value_policy_file << "right_" + std::to_string(num_of_birds-1) << std::endl;
+    // value_policy_file.open("data/value_policy.csv");
+    // for(std::size_t i=0; i<num_of_birds-1; i++){
+    //     value_policy_file << "value_" + std::to_string(i) << ",";
+    //     value_policy_file << "left_" + std::to_string(i) << ",";
+    //     value_policy_file << "straight_" + std::to_string(i) << ",";
+    //     value_policy_file << "right_" + std::to_string(i) << ",";
+    // }
+
+    // value_policy_file << "value_" + std::to_string(num_of_birds-1) << ",";
+    // value_policy_file << "left_" + std::to_string(num_of_birds-1) << ",";
+    // value_policy_file << "straight_" + std::to_string(num_of_birds-1) << ",";
+    // value_policy_file << "right_" + std::to_string(num_of_birds-1) << std::endl;
 
     //Time of episode
     std::size_t t = 0;
@@ -256,14 +271,25 @@ int main(){
             //Update time step
             t++;
         }
-        
+
+        // if(ep%1000 == 0){
+        //     for(std::size_t i=0; i < num_of_birds; ++i){
+        //         for(std::size_t k=0; k<state_space_dim; ++k){
+        //             value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4] = v[i][k];
+        //             value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+1] = agents[i].get_policy()->get(k,0);
+        //             value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+2] = agents[i].get_policy()->get(k,1);
+        //             value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+3] = agents[i].get_policy()->get(k,2);
+        //         }
+        //     }
+        // }
+
         if(ep%1000 == 0){
             for(std::size_t i=0; i < num_of_birds; ++i){
                 for(std::size_t k=0; k<state_space_dim; ++k){
-                    value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4] = v[i][k];
-                    value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+1] = agents[i].get_policy()->get(k,0);
-                    value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+2] = agents[i].get_policy()->get(k,1);
-                    value_policy[static_cast<int>(ep/1000)*state_space_dim+k][i*4+3] = agents[i].get_policy()->get(k,2);
+                    value_policy[i*4][static_cast<int>(ep/1000)*state_space_dim+k] = v[i][k];
+                    value_policy[i*4+1][static_cast<int>(ep/1000)*state_space_dim+k] = agents[i].get_policy()->get(k,0);
+                    value_policy[i*4+2][static_cast<int>(ep/1000)*state_space_dim+k] = agents[i].get_policy()->get(k,1);
+                    value_policy[i*4+3][static_cast<int>(ep/1000)*state_space_dim+k] = agents[i].get_policy()->get(k,2);
                 }
             }
         }
@@ -286,15 +312,30 @@ int main(){
     for(auto it=t_ep.begin(); it!=t_ep.end(); ++it)
         episode_file << (*it)[0] << "," << (*it)[1] << "," << (*it)[2] << "\n";
 
-    for(std::size_t i=0; i<value_policy.size(); ++i){
-        for(std::size_t j=0; j<4*num_of_birds-1; ++j)
-            value_policy_file << value_policy[i][j] << ",";
-        value_policy_file << value_policy[i][4*num_of_birds-1] << "\n";
+    // for(std::size_t i=0; i<value_policy.size(); ++i){
+    //     for(std::size_t j=0; j<4*num_of_birds-1; ++j)
+    //         value_policy_file << value_policy[i][j] << ",";
+    //     value_policy_file << value_policy[i][4*num_of_birds-1] << "\n";
+    // }
+
+    
+    for(std::size_t i=0; i<num_of_birds; ++i){
+        for(std::size_t k=0; k<value_policy[0].size(); ++k){
+            value_policy_files[i] << value_policy[4*i][k] << ",";
+            value_policy_files[i] << value_policy[4*i+1][k] << ",";
+            value_policy_files[i] << value_policy[4*i+2][k] << ",";
+            value_policy_files[i] << value_policy[4*i+3][k] << "\n";
+        }
     }
+    
+
 
     traj_file.close();
     episode_file.close();
-    value_policy_file.close();
+
+    for(std::size_t i=0; i<num_of_birds; ++i)
+        value_policy_files[i].close();
+
     obs_file.close();
     return 0;
 }
