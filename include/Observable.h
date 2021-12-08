@@ -59,14 +59,11 @@ S& operator <<(S & os, Observable<T> &o){
     return os;
 }
 
-//This should be included in the function above
-// template <typename T>
-// std::ofstream& operator <<(std::ofstream & os, Observable<T> &o);
 
 template <typename T>
 std::size_t Observable<T>::index(){
 
-    //We treat a state as number in base _states_per_sector
+    //We treat a state as a number in base _states_per_sector
     //with each digit representing the state of a sector 
     //(e.g. 00100, meaning we only see a foe in the central sector)
     //and transform it into a number in base 10 for indexing.
@@ -77,7 +74,6 @@ std::size_t Observable<T>::index(){
 
     for(std::size_t k=0; k<get_sectors_num(); k++){
         i += (_o[k].to_int())*pow(_states_per_sector,k);
-        //i+=static_cast<int>(_o[k])*pow(_states_per_sector,k); //This transforms base _max_val+1 into a number
     }
 
     return i;

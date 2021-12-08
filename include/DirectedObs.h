@@ -3,8 +3,8 @@
 
 #include "UndirectedObs.h"
 
+//This multiplies the states in each sector by 2
 enum class Direction{in,out};
-//Direction angle_to_dir(double angle);
 
 class DirectedObs : public UndirectedObs {
 

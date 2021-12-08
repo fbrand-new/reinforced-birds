@@ -5,6 +5,11 @@
 #include <assert.h>
 #include <iostream>
 
+/*
+    This class defines an angular coordinate between (-PI,PI]
+*/
+
+
 class Angle{
 
     //The cut is fixed at -M_PI!

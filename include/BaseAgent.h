@@ -12,6 +12,11 @@
 #include <memory>
 #include <algorithm>
 
+/*
+This is the base class for two different agents, in which two ways to observe the states are defined.
+Please take a look at DirectedAgent.h and UndirectedAgent.h
+*/
+
 using int_pair = std::pair<std::size_t, std::size_t>;
 
 enum class Obs_setting{foe_only, overwrite, both};

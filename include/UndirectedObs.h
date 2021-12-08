@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+//Foe will be an evader for a pursuer and viceversa.
+//Brother will be an evader for an evader.
 enum class Bird_in_scope{none, foe, brother, both};
 
 class UndirectedObs{

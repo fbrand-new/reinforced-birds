@@ -18,9 +18,7 @@ class DirectedAgent : public BaseAgent<DirectedObs, Policy>{
         DirectedAgent(std::size_t sector_num, std::size_t state_per_sector, double vision_range, double vision_angle);
         DirectedAgent(DirectedAgent &&a) = default;
 
-        // Update policy given an observable and action
-        //We use this only with Boltzmann policy: it will be an empty 
-        //method except for Boltzmann policy in both subclasses
+        // Update policy given an observable and action, we use this only with softmax policy
         void update_policy(double coeff, Observable<DirectedObs> &o, Action &a);
         Observable<DirectedObs> obs(State &s, Obs_setting setting);
         void obs_opponent(std::size_t begin, std::size_t end, const Bird &me, const std::vector<Bird> &birds, double sin_alpha, double cos_alpha);
@@ -84,8 +82,10 @@ std::tuple<bool, Angle, Angle> DirectedAgent<Policy>::out_of_scope(const Bird &m
 template<typename Policy>
 void DirectedAgent<Policy>::obs_opponent(std::size_t begin, std::size_t end, const Bird &me, const std::vector<Bird> &birds, double sin_alpha, double cos_alpha){
     
-    std::map<std::size_t, std::tuple<bool,Angle,Angle>> birds_to_locate; //Set of birds that are yet to be located
-    for(std::size_t i=begin; i<end; ++i){
+    //Set of birds that are yet to be observed by this agent
+    std::map<std::size_t, std::tuple<bool,Angle,Angle>> birds_to_locate; 
+    //Here we full the map above with all the birds and then we remove them as soon as they are observed
+    for(std::size_t i=begin; i<end; ++i){ 
         auto oos = out_of_scope(me, birds[i], sin_alpha, cos_alpha);
         if(!std::get<0>(oos))
             birds_to_locate.emplace(i,oos);
@@ -96,15 +96,15 @@ void DirectedAgent<Policy>::obs_opponent(std::size_t begin, std::size_t end, con
     int out = 0;
 
     for(std::size_t i = 0; i < this->_o.get_sectors_num(); ++i){
-        for(auto it = birds_to_locate.cbegin(); it != birds_to_locate.cend();){              
+        for(auto it = birds_to_locate.cbegin(); it != birds_to_locate.cend();){    //Cycle through unobserved birds           
             if(std::get<1>((*it).second).get() < this->_vision_sectors[i+1]){ //If the angle of bird b falls into sector i
                 auto orientation = std::get<2>((*it).second).get();
-                if( orientation < -M_PI_2 || orientation > M_PI_2){ //Pointing towards a
-                    in++;
+                if( orientation < -M_PI_2 || orientation > M_PI_2){ 
+                    in++; //Pointing towards a
                 } else {
-                    out++;
+                    out++; //Pointing outwards from a
                 }
-                it = birds_to_locate.erase(it);
+                it = birds_to_locate.erase(it); //Birds has been seen, so it is removed from the map
             } else {
                 ++it;
             }
@@ -124,9 +124,11 @@ void DirectedAgent<Policy>::obs_opponent(std::size_t begin, std::size_t end, con
 template<typename Policy>
 void DirectedAgent<Policy>::obs_brother(std::size_t begin, std::size_t end, const Bird &me, const std::vector<Bird> &birds, double sin_alpha, double cos_alpha, Obs_setting setting, const std::size_t me_id){
     
-    std::map<std::size_t, std::tuple<bool,Angle,Angle>> birds_to_locate; //Set of birds that are yet to be located
+    //Set of birds that are yet to be observed by this agent
+    std::map<std::size_t, std::tuple<bool,Angle,Angle>> birds_to_locate;
+    //Here we full the map above with all the birds and then we remove them as soon as they are observed
     for(std::size_t i=begin; i<end; ++i){
-        if(i != me_id){ //TODO: if we don't put extra checks there will be some overhead for predators
+        if(i != me_id){ //TODO: if we don't put extra checks there will be some overhead for pursuer(s)
             auto oos = out_of_scope(me, birds[i], sin_alpha, cos_alpha);
             if(!std::get<0>(oos))
                 birds_to_locate.emplace(i,oos);
@@ -138,7 +140,7 @@ void DirectedAgent<Policy>::obs_brother(std::size_t begin, std::size_t end, cons
     int out = 0;
 
     for(std::size_t i = 0; i < this->_o.get_sectors_num(); ++i){
-        if(setting == Obs_setting::overwrite){ //If we prioritize opponent first, if the sector is already occupied we leave it as is
+        if(setting == Obs_setting::overwrite){ //If we prioritize opponent first and if the sector is already occupied we leave it as is
             if(this->_o.get_sector(i).get_bird_in_scope() == Bird_in_scope::foe)
                 continue;
         }
@@ -186,6 +188,7 @@ Observable<DirectedObs> DirectedAgent<Policy>::obs(State &s, Obs_setting setting
     auto birds = s.get_birds();
     auto me = birds[me_id];
 
+    //Sin and cos of this agent orientation, in order to rotate the system towards him
     double sin_alpha = -Angle::sin(me.get_alpha());
     double cos_alpha = Angle::cos(me.get_alpha());
 
@@ -202,13 +205,11 @@ Observable<DirectedObs> DirectedAgent<Policy>::obs(State &s, Obs_setting setting
     if(setting == Obs_setting::foe_only)
         return this->_o;
 
-    //TODO: need to implement other settings also (?)
     if(me.get_species() == Species::pursuer){
         obs_brother(0,pursuers_num, me, birds, sin_alpha, cos_alpha, setting, me_id);
     } else {
         obs_brother(pursuers_num, birds.size(), me, birds, sin_alpha, cos_alpha, setting, me_id);
     }
-
 
     return this->_o;
 }

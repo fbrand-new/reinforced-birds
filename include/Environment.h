@@ -12,10 +12,10 @@ class Environment
     private:
         //Each bird has its own state. A vector of States defines the system
         State _state;
-        double _v0; //The velocity of the birds is a property of the environment.
-        //We could define a different environment in which birds move faster
+        std::vector<double> _v0;
         double _capture_range; 
-        double _steering_angle;
+        std::vector<double> _steering_angles;
+
         //Update of single bird state
         void update(double velocity, double angle);
 
@@ -24,6 +24,7 @@ class Environment
         //Constructors
         Environment(std::size_t birds_num);
         Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle);
+        Environment(std::size_t birds_num, double v_pursuer, double v_evader, double capture_range, double steering_angle_pursuer, double steering_angle_evader);
 
         //p(s'|a,s): One step dynamics. We are going to suppose to be in a deterministic settings, so s' = f(a,s)
         State dynamics(std::vector<Action> a, State& s);
