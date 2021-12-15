@@ -20,7 +20,11 @@ class DirectedAgent : public BaseAgent<DirectedObs, Policy>{
 
         // Update policy given an observable and action, we use this only with softmax policy
         void update_policy(double coeff, Observable<DirectedObs> &o, Action &a);
+
+        //method to be called in the main
         Observable<DirectedObs> obs(State &s, Obs_setting setting);
+
+        void obs_closer(const Bird &me, const std::vector<Bird> &birds, double sin_alpha, double cos_alpha, std::size_t pursuers_num, std::size_t me_id);
         void obs_opponent(std::size_t begin, std::size_t end, const Bird &me, const std::vector<Bird> &birds, double sin_alpha, double cos_alpha);
         void obs_brother(std::size_t begin, std::size_t end, const Bird &me, const std::vector<Bird> &birds, double sin_alpha, double cos_alpha, Obs_setting setting, const std::size_t me_id);
         std::tuple<bool,Angle,Angle> out_of_scope(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha);
@@ -77,6 +81,69 @@ std::tuple<bool, Angle, Angle> DirectedAgent<Policy>::out_of_scope(const Bird &m
     //TODO: We may add a check on the other hand of the scope also, i.e. angle > vision_sector[-1]
 
     return std::make_tuple(0, angle_and_orientation.first, angle_and_orientation.second);
+}
+
+template<typename Policy>
+void DirectedAgent<Policy>::obs_closer(const Bird &me, const std::vector<Bird> &birds, double sin_alpha, double cos_alpha, std::size_t pursuers_num, std::size_t me_id){
+    
+    std::vector<std::pair<std::size_t, double>> sorted_birds;
+    double dist;
+
+    //We insert in the array only birds that are in vision, no need to sort the others
+    //Double for is faster than having an if condition to check in a loop every time
+    for(std::size_t i=0; i<me_id; ++i){
+        dist = relative_distance_squared(me, birds[i]);
+        if(dist < this->_vision_range*this->_vision_range){
+            sorted_birds.push_back(std::make_pair(i,dist));
+        }
+    }
+    for(std::size_t i=me_id+1; i<birds.size(); ++i){
+       dist = relative_distance_squared(me, birds[i]);
+        if(dist < this->_vision_range*this->_vision_range){
+            sorted_birds.push_back(std::make_pair(i,dist));
+        }
+    }
+
+    //Sort the array of birds who made it into our vision
+    std::sort(sorted_birds.begin(), sorted_birds.end(), [](auto &left, auto &right) {
+        return left.second < right.second;
+    });
+
+    for(auto &b:sorted_birds){
+        auto angle_and_orientation = relative_angle_and_orientation(me,birds[b.first],sin_alpha, cos_alpha);
+        
+        if(angle_and_orientation.first.get() < this->_vision_sectors[0]) //If he is behind our vision
+            continue; //Go to the next bird
+        
+        for(std::size_t i=0; i<this->_o.get_sectors_num(); ++i){
+            if(this->_o.is_sector_empty(i)){
+                if(angle_and_orientation.first.get() < this->_vision_sectors[i+1]){
+                    //If he is in the sector we identify the species and its orientation
+                    auto orientation = angle_and_orientation.second.get();
+                    Direction dir;
+                    if(orientation < -M_PI_2 || orientation > M_PI_2){
+                        dir = Direction::in;
+                    } else {
+                        dir = Direction::out;
+                    }
+
+                    if(b.first < pursuers_num){
+                        if(me.get_species()==Species::evader)
+                            this->_o.set_sector(i, DirectedObs(Bird_in_scope::foe, dir));
+                        else
+                            this->_o.set_sector(i, DirectedObs(Bird_in_scope::brother, dir));
+                    } else {
+                        if(me.get_species()==Species::evader)
+                            this->_o.set_sector(i, DirectedObs(Bird_in_scope::brother, dir));
+                        else
+                            this->_o.set_sector(i, DirectedObs(Bird_in_scope::foe, dir));
+                    }      
+                    break;  
+                } //Close sector if
+            } //Close empty sector if
+        } //Close for
+    } //Close sorted birds for 
+
 }
 
 template<typename Policy>
@@ -196,6 +263,11 @@ Observable<DirectedObs> DirectedAgent<Policy>::obs(State &s, Obs_setting setting
     for(std::size_t i=0; i<this->_o.get_sectors_num(); ++i)
         this->_o.set_sector(i,DirectedObs());
  
+    if(setting == Obs_setting::closer){
+        obs_closer(me, birds, sin_alpha, cos_alpha, pursuers_num, me_id);
+        return this->_o;
+    }
+
     //Sees opponents and sets sectors
     if(me.get_species() == Species::pursuer)
         obs_opponent(pursuers_num, birds.size(), me, birds, sin_alpha, cos_alpha);

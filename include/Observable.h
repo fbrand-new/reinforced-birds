@@ -44,6 +44,8 @@ class Observable{
         //Setters
         void set_sector(std::size_t i, T b) {_o[i] = b;}
         std::size_t index();
+
+        bool is_sector_empty(std::size_t i);
 };
 
 template <typename T, typename S>
@@ -79,5 +81,12 @@ std::size_t Observable<T>::index(){
     return i;
 }
 
+template <typename T>
+bool Observable<T>::is_sector_empty(std::size_t i){
+    if(get_sector(i).get_bird_in_scope() == Bird_in_scope::none)
+        return true;
+    else
+        return false;
+}
 
 #endif

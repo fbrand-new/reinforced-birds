@@ -19,7 +19,7 @@ Please take a look at DirectedAgent.h and UndirectedAgent.h
 
 using int_pair = std::pair<std::size_t, std::size_t>;
 
-enum class Obs_setting{foe_only, overwrite, both};
+enum class Obs_setting{foe_only, overwrite, both, closer};
 
 template <typename T, typename Policy>
 class BaseAgent{

@@ -66,26 +66,28 @@ int main(){
 
     //Environment params
     constexpr double steering_angle_pursuer = M_PI/6;
-    constexpr double steering_angle_evader = M_PI/6; 
+    constexpr double steering_angle_evader = M_PI/4; 
     
     constexpr double v0_pursuer = 0.5; //v0_pursuer > v0_evader otherwise evader learns linear escape and it's game over
-    constexpr double v0_evader = 0.35;
+    constexpr double v0_evader = 0.4;
 
     constexpr double vision_range_pursuer = 50;
-    constexpr double vision_range_evader = 4;
+    constexpr double vision_range_evader = 10;
     constexpr double vision_angle_pursuer = M_PI;
     constexpr double vision_angle_evader = 3./2*M_PI;
     constexpr double capture_range = 0.5;
     constexpr double gamma = 1;
 
     //This can be modified: change setting to another possible Obs_setting
-    //(foe_only, overwrite, both)
+    //(foe_only, overwrite, both, closer)
     //foe_only means that both pursuer and evader can only see opposing species
     //overwrite means that both pursuer and evader prioritize the opponent (foe)
+    //closer means that each bird sees the species of the closest bird in each sector
     //species in a sector, but can also see an individual of the same species (brother)
     const Obs_setting setting = Obs_setting::overwrite;
     std::size_t states_per_sector = 2;
-    if(setting == Obs_setting::overwrite)
+    //In a sector you can have either an evader or a pursuer with these observation settings
+    if(setting == Obs_setting::overwrite || setting == Obs_setting::closer)  
         states_per_sector = 3;
     else if(setting == Obs_setting::both)
         states_per_sector = 4;
@@ -109,7 +111,7 @@ int main(){
     double alpha_t = 0.001;
 
     //Decide the episode length
-    std::size_t episodes_num = 10000;
+    std::size_t episodes_num = 200000;
     std::size_t episode_length = 500;
 
     //Instantiate a learning signal to alternate between preys and predator learning
