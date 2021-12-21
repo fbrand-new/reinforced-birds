@@ -17,7 +17,7 @@ void State::update(double velocity, double angle, unsigned int i){
 void State::reset(){
 
     _birds[0].reset(0,0,rand_a());
-    double theta = (double) rand()/RAND_MAX * 2 * M_PI; //Random theta in polar coordinates
+    double theta = Rand::theta_rand(); //Random theta in polar coordinates
     for(std::size_t i=1; i< _birds.size(); ++i){
         //_birds[i].reset(rand_x(), rand_y(), rand_a());
         _birds[i].reset(10, theta);
@@ -53,14 +53,14 @@ std::ostream& operator <<(std::ostream & os, State &s){
 }
 
 double State::rand_x(){
-    return (double)rand()/RAND_MAX+10;
+    return Rand::unit_rand() + 10;
 }
 
 double State::rand_y(){
-    return (double)rand()/RAND_MAX+10;
+    return Rand::unit_rand() + 10;
 }
 
 double State::rand_a(){
-    return (rand()%12)*M_PI/6 -M_PI;
+    return Rand::theta_rand();
 }
 

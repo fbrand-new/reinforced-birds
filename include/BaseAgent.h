@@ -52,17 +52,13 @@ class BaseAgent{
         void set_vision_range(double vision_range) {_vision_range = vision_range;}
         void set_vision_angle(double vision_angle) {_vision_angle = vision_angle;}
         void set_vision_sectors();
+        void set_vision_sectors(std::vector<double> &vis_sectors);
         void set_policy(Policy &&p);
 
         //Obsevable<T> obs(State &s, Obs_setting setting);
 
         // Take an action according to a certain policy and the current observation
         Action act(State &s, Observable<T> &o) {return _p->decide(o);}
-
-
-        //void obs_opponent(std::size_t begin, std::size_t end, const Bird &me, const std::vector<Bird> &birds, double sin_alpha, double cos_alpha);
-        //int obs_foe(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha, const std::size_t sectors_num);
-        //int obs_brother(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha, const std::size_t sectors_num, Obs_setting setting);
 };
 
 
@@ -78,7 +74,6 @@ BaseAgent<T,Policy>::BaseAgent():
 template <typename T, typename Policy>
 BaseAgent<T, Policy>::BaseAgent(std::size_t sector_num, std::size_t state_per_sector, double vision_range, double vision_angle):
     _o{sector_num, state_per_sector},
-    //_p{std::make_unique<Policy>()},
     _vision_range{vision_range},
     _vision_angle{vision_angle},
     _vision_sectors{std::vector<double>(_o.get_sectors_num()+1)}
@@ -98,12 +93,17 @@ BaseAgent<T, Policy>::BaseAgent(double vision_range, double vision_angle):
 
 template <typename T, typename Policy>
 void BaseAgent<T, Policy>::set_vision_sectors(){
-
     auto vision_frac = _vision_angle/(_vision_sectors.size()-1);
     _vision_sectors[0] = -_vision_angle/2;
     for(std::size_t k=1; k<_vision_sectors.size(); ++k)
         _vision_sectors[k] = _vision_sectors[k-1] + vision_frac;
+}
 
+template<typename T, typename Policy>
+void BaseAgent<T,Policy>::set_vision_sectors(std::vector<double> &vis_sectors){
+    assert(vis_sectors.size() == _vision_sectors.size());
+    for(std::size_t k=1; k<_vision_sectors.size(); ++k)
+        _vision_sectors[k] = vis_sectors[k];
 }
 
 template <typename T, typename Policy>

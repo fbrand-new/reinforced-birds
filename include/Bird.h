@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <cmath>
+#include "Rand.h"
 #include "Angle.h"
 //This is an entity that the environment is made of. The state of the environemnt, IN OUR CASE, is a collection
 //of these entities

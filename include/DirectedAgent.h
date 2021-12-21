@@ -90,7 +90,7 @@ void DirectedAgent<Policy>::obs_closer(const Bird &me, const std::vector<Bird> &
     double dist;
 
     //We insert in the array only birds that are in vision, no need to sort the others
-    //Double for is faster than having an if condition to check in a loop every time
+    //Two for loops are faster than having an if condition to check in a loop every time
     for(std::size_t i=0; i<me_id; ++i){
         dist = relative_distance_squared(me, birds[i]);
         if(dist < this->_vision_range*this->_vision_range){

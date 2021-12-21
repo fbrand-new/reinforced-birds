@@ -2,6 +2,7 @@
 #define __ENVIRONMENT_H_
 
 #include <vector>
+#include <random>
 #include "State.h"
 #include "Reward.h"
 #include "Action.h"

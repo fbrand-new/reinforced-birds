@@ -7,17 +7,18 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include "Rand.h"
 
 class State{
 
     private:
         std::vector<Bird> _birds;
         std::size_t _pursuers_num;
-
+        
     public:
 
         //Ctors
-        State(unsigned int i);
+        State(unsigned int is);
 
         //Getters
         auto & get_birds() const {return _birds;}

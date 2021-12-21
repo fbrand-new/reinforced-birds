@@ -26,6 +26,7 @@
 
 */
 
+
 #include "State.h"
 #include "Observable.h"
 #include "Environment.h"
@@ -45,11 +46,9 @@
 #include <list>
 #include <memory>
 #include <algorithm>
-#include <random>
-
-#include "config.h"
 
 //Modify these typedefs in case you want to try a different observation mechanism
+
 using Obs = Observable<DirectedObs>; //Observable<UndirectedObs>
 using BoltzmannAgt = DirectedAgent<Boltzmann>; //UndirectedAgent<Boltzmann>
 
@@ -59,9 +58,33 @@ using BoltzmannAgt = DirectedAgent<Boltzmann>; //UndirectedAgent<Boltzmann>
 // Main execution
 int main(){
 
-    //Environment parameters and hyperparameters of the problem are defined in config.h
-    //and included before the main function
+    //*****************************************************************************************//
+    //*****************************************************************************************//
+    //                                    MODIFIABLE PART                                      //
+    //*****************************************************************************************//
+    //*****************************************************************************************//
 
+    //Environment params
+    constexpr double steering_angle_pursuer = M_PI/12;
+    constexpr double steering_angle_evader = M_PI/10; 
+    
+    constexpr double v0_pursuer = 0.5; //v0_pursuer > v0_evader otherwise evader learns linear escape and it's game over
+    constexpr double v0_evader = 0.4;
+
+    constexpr double vision_range_pursuer = 50;
+    constexpr double vision_range_evader = 10;
+    constexpr double vision_angle_pursuer = M_PI;
+    constexpr double vision_angle_evader = 3./2*M_PI;
+    constexpr double capture_range = 0.5;
+    constexpr double gamma = 1;
+
+    //This can be modified: change setting to another possible Obs_setting
+    //(foe_only, overwrite, both, closer)
+    //foe_only means that both pursuer and evader can only see opposing species
+    //overwrite means that both pursuer and evader prioritize the opponent (foe)
+    //closer means that each bird sees the species of the closest bird in each sector
+    //species in a sector, but can also see an individual of the same species (brother)
+    const Obs_setting setting = Obs_setting::overwrite;
     std::size_t states_per_sector = 2;
     //In a sector you can have either an evader or a pursuer with these observation settings
     if(setting == Obs_setting::overwrite || setting == Obs_setting::closer)  
@@ -73,11 +96,36 @@ int main(){
     //For the class UndirectedObs
     UndirectedObs::set_size(states_per_sector); 
 
+    //Set this to 0 if we have undirected observations
+    bool is_directed = 1;
+
+    //Decide the number of birds. 
+    //The first one is the pursuer, the other are agents
+    std::size_t num_of_birds = 10;
+
+    //Decide the number of vision sectors each agent observes
+    std::size_t sectors_num = 5;
+    
+    //Learning rates
+    double alpha_w = 0.01;
+    double alpha_t = 0.001;
+
+    //Decide the episode length
+    std::size_t episodes_num = 200000;
+    std::size_t episode_length = 500;
+
     //Instantiate a learning signal to alternate between preys and predator learning
     std::vector<std::size_t> learning_agent;
     for (auto i=1; i < static_cast<int>(episodes_num/2000); ++i){
         learning_agent.push_back(5000*i);
     }
+
+
+    //*****************************************************************************************//
+    //*****************************************************************************************//
+    //                                UNMODIFIABLE PART                                        //
+    //*****************************************************************************************//
+    //*****************************************************************************************//
 
     if(is_directed)
         states_per_sector = states_per_sector*2; 
@@ -94,12 +142,6 @@ int main(){
 
 
     Signal pred_training(learning_agent);
-
-    //Instantiation of the random number generator for the program
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    //std::uniform_int_distribution<int> unif(0,2);
-    //to sample a uniformly distributed number use: unif(mt))
 
     //---------------------------------------------------------------------------------
 
@@ -121,11 +163,10 @@ int main(){
     }
     
     //These characterize only preys
-    
     for(std::size_t j=1; j < agents.size(); ++j){
         agents[j].set_vision_range(vision_range_evader);
         agents[j].set_vision_angle(vision_angle_evader);
-        agents[j].set_vision_sectors(prey_sectors);
+        agents[j].set_vision_sectors();
     }
 
     //Bunch of pointers to keep track of values during the run and avoiding hard copying
@@ -143,23 +184,16 @@ int main(){
     std::list<std::pair<std::size_t,State>> traj;
     std::list<std::tuple<std::size_t,std::size_t, Obs>> record_obs;
     std::list<std::vector<std::size_t>> t_ep;
-    //This vector has 4 entries because it stores the value and the theta of the 3 actions for each state, for each episode
+    std::vector<std::vector<double>> value_policy(4*num_of_birds, std::vector<double>(static_cast<unsigned int>(episodes_num*state_space_dim/1000)));
     
-    std::vector<std::vector<double>> value_policy(4*num_of_birds, std::vector<double>(
-                                    std::max(state_space_dim,static_cast<std::size_t>(episodes_num*state_space_dim/1000))));
-    
-    //This stores the probability to be in each state at every moment for each bird
-    std::vector<std::vector<double>> eta(state_space_dim, std::vector<double>(num_of_birds));
-    std::size_t effective_num_of_steps = 0; //This is useful to compute the probability at the end
-
     //Output files of the simulation
     std::ofstream traj_file;
     std::ofstream obs_file;
     std::ofstream episode_file;
-    std::ofstream eta_file;
     std::vector<std::ofstream> value_policy_files(num_of_birds);
 
     //File initialization and header construction
+
     //---------------------------------------------------------------------------------
     traj_file.open("data/pursuer_trajectory.csv");
 
@@ -172,6 +206,7 @@ int main(){
     }
     traj_file << "\n";
 
+
     obs_file.open("data/observations.csv");
     obs_file << "episode" << "," << "bird" << ",";
 
@@ -180,6 +215,7 @@ int main(){
     }
     obs_file << "sec"+std::to_string(sectors_num-1)+"\n";
     
+
     episode_file.open("data/episode.csv");
     episode_file << "Episode,EndTime,PredatorTraining" << std::endl;
 
@@ -192,11 +228,6 @@ int main(){
      value_policy_files[i] << "right";
      value_policy_files[i] << std::endl;
     }
-
-    eta_file.open("data/eta.csv");
-    for(std::size_t i=0; i<num_of_birds-1; ++i)
-        eta_file << "eta_" + std::to_string(i) << ",";
-    eta_file << "eta_" + std::to_string(num_of_birds-1) << std::endl;
 
     //---------------------------------------------------------------------------------
 
@@ -225,12 +256,6 @@ int main(){
                 for(std::size_t i = 0; i<num_of_birds; ++i)
                     record_obs.push_back(std::make_tuple(ep,i,*prev_obs[i]));
             }
-
-            //Update the number of times we visited state j for bird i; add an effective step
-            for(std::size_t i=0; i<num_of_birds; ++i){
-                eta[(*prev_obs[i]).index()][i] += 1;
-            }
-            effective_num_of_steps++;
                 
             //All agents get an observation based on the current state and return an action
             for(std::size_t i = 0; i < agents.size(); ++i){
@@ -262,7 +287,7 @@ int main(){
             }
             
             for(std::size_t i=0; i<num_of_birds; ++i){
-                delta[i] = std::get<0>(r)[i] + v[i][*next_obs[i]] - v[i][*prev_obs[i]];
+                delta[i] = std::get<0>(r)[i] + gamma*v[i][*next_obs[i]] - v[i][*prev_obs[i]];
                 v[i][*prev_obs[i]] += alpha_w*delta[i]; //V values update
             }     
          
@@ -302,12 +327,6 @@ int main(){
         
     } //End of an episode
 
-    //Dividing by the number of number_time_steps to get actual probabilities
-    for(std::size_t j=0; j<state_space_dim; ++j){
-        for(std::size_t i=0; i<num_of_birds; ++i)
-            eta[j][i] /= effective_num_of_steps;
-    }
-
     //Transferring data to file at the end of everything
     for(auto it1=traj.begin(); it1!=traj.end(); ++it1){
         traj_file << std::get<0>(*it1) << "," << std::get<1>(*it1); //<< "\n";
@@ -318,6 +337,7 @@ int main(){
                  << std::get<2>(*it1) << std::endl;
     }
         
+
     for(auto it=t_ep.begin(); it!=t_ep.end(); ++it)
         episode_file << (*it)[0] << "," << (*it)[1] << "," << (*it)[2] << "\n";
   
@@ -330,19 +350,12 @@ int main(){
         }
     }
     
-    for(std::size_t i=0; i<state_space_dim; ++i){
-        for(std::size_t j=0; j<num_of_birds-1; ++j)
-            eta_file << eta[i][j] << ",";
-        eta_file << eta[i][num_of_birds-1] << "\n";
-    }
-
     //Closing files
     traj_file.close();
     episode_file.close();
     for(std::size_t i=0; i<num_of_birds; ++i)
         value_policy_files[i].close();
     obs_file.close();
-    eta_file.close();
 
     return 0;
 }
