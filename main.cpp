@@ -20,10 +20,6 @@
     In the DirectedAgent.h class you can find how the observations are defined for the current implementation.
     Support for UndirectedObservation (i.e. without distinguishing whether other birds are pointing
     towards or outwards from the agent) is also available but main needs to be slightly modified.
-
-
-
-
 */
 
 #include "State.h"
@@ -50,7 +46,9 @@
 #include "config.h"
 
 //Modify these typedefs in case you want to try a different observation mechanism
-using Obs = Observable<DirectedObs>; //Observable<UndirectedObs>
+//1. We would like to have some sectors in which we only observe the predator
+
+using Obs = Observable<DirectedSector>; //Observable<UndirectedObs>
 using BoltzmannAgt = DirectedAgent<Boltzmann>; //UndirectedAgent<Boltzmann>
 
 //You can also define a fixed policy Chase/Run with
@@ -61,17 +59,16 @@ int main(){
 
     //Environment parameters and hyperparameters of the problem are defined in config.h
     //and included before the main function
-
-    std::size_t states_per_sector = 2;
+    
     //In a sector you can have either an evader or a pursuer with these observation settings
-    if(setting == Obs_setting::overwrite || setting == Obs_setting::closer)  
-        states_per_sector = 3;
-    else if(setting == Obs_setting::both)
-        states_per_sector = 4;
+    // if(setting == Obs_setting::overwrite || setting == Obs_setting::closer)  
+    //     states_per_sector = 3;
+    // else if(setting == Obs_setting::both)
+    //     states_per_sector = 4;
 
     //Sets the corrects number of states per sector
     //For the class UndirectedObs
-    UndirectedObs::set_size(states_per_sector); 
+    //UndirectedObs::set_size(states_per_sector); 
 
     //Instantiate a learning signal to alternate between preys and predator learning
     std::vector<std::size_t> learning_agent;
@@ -79,18 +76,26 @@ int main(){
         learning_agent.push_back(5000*i);
     }
 
-    if(is_directed)
-        states_per_sector = states_per_sector*2; 
+    // if(is_directed)
+    //     states_per_sector = states_per_sector*2; 
     
-    const std::size_t state_space_dim = pow(states_per_sector, sectors_num);
+    std::size_t state_space_dim = 1;
+    for(std::size_t i=0; i<sectors_num; ++i)
+        state_space_dim *= states_per_sector[i];
     
     //Print the environment and training information into a log file
     std::ofstream log_file;
     log_file.open("data/env_info.csv");
-    log_file << "episodes_num,episodes_length,num_of_birds,state_space_dim,episode_write_step,sectors,states_per_sector,is_directed" << std::endl;
+    log_file << "episodes_num,episodes_length,num_of_birds,state_space_dim,episode_write_step,sectors,is_directed" << std::endl;
     log_file << episodes_num << "," << episode_length << "," << num_of_birds << "," << 
-             state_space_dim << "," << 1000 << "," << sectors_num << "," <<
-             static_cast<int>(states_per_sector) << "," << (is_directed ? 1 : 0) << std::endl;
+             state_space_dim << "," << 1000 << "," << sectors_num << "," 
+                << (is_directed ? 1 : 0) << std::endl;
+
+    std::ofstream sectors_file;
+    sectors_file.open("data/sectors_info.csv");
+    for(std::size_t i=0; i<sectors_num-1; ++i)
+        sectors_file << "bot_angle_"+std::to_string(i)+","+"states_sector_"+std::to_string(i)+",";
+    sectors_file << "bot_angle_"+std::to_string(sectors_num-1)+","+"states_sector_"+std::to_string(sectors_num-1);
 
 
     Signal pred_training(learning_agent);
@@ -144,7 +149,6 @@ int main(){
     std::list<std::tuple<std::size_t,std::size_t, Obs>> record_obs;
     std::list<std::vector<std::size_t>> t_ep;
     //This vector has 4 entries because it stores the value and the theta of the 3 actions for each state, for each episode
-    
     std::vector<std::vector<double>> value_policy(4*num_of_birds, std::vector<double>(
                                     std::max(state_space_dim,static_cast<std::size_t>(episodes_num*state_space_dim/1000))));
     

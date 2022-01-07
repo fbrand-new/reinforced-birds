@@ -5,7 +5,7 @@
 #include "Boltzmann.h"
 
 template <typename Policy>
-class UndirectedAgent : public BaseAgent<UndirectedObs, Policy>{
+class UndirectedAgent : public BaseAgent<UndirectedSector, Policy>{
 
     private:
 
@@ -15,13 +15,14 @@ class UndirectedAgent : public BaseAgent<UndirectedObs, Policy>{
         UndirectedAgent(Policy &p);
         UndirectedAgent(double vision_range, double vision_angle);
         UndirectedAgent(std::size_t sector_num, std::size_t state_per_sector, double vision_range, double vision_angle);
+        UndirectedAgent(std::size_t sector_num, std::vector<size_t> states_per_sector, double vision_range, double vision_angle);
         UndirectedAgent(UndirectedAgent &&a);
 
         // Update policy given an observable and action
         //We use this only with Boltzmann policy: it will be an empty 
         //method except for Boltzmann policy in both subclasses
-        void update_policy(double coeff, Observable<UndirectedObs> &o, Action &a);
-        Observable<UndirectedObs> obs(State &s, Obs_setting setting);
+        void update_policy(double coeff, Observable<UndirectedSector> &o, Action &a);
+        Observable<UndirectedSector> obs(State &s, Obs_setting setting);
         std::pair<bool,Angle> out_of_scope(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha);
         int obs_foe(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha, const std::size_t sectors_num);
         int obs_brother(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha, const std::size_t sectors_num, Obs_setting setting);
@@ -32,30 +33,34 @@ class UndirectedAgent : public BaseAgent<UndirectedObs, Policy>{
 
 template <typename Policy>
 UndirectedAgent<Policy>::UndirectedAgent(): 
-    BaseAgent<UndirectedObs, Policy>()
+    BaseAgent<UndirectedSector, Policy>()
     {}
 
 template <typename Policy>
 UndirectedAgent<Policy>::UndirectedAgent(Policy &p): 
-    BaseAgent<UndirectedObs, Policy>(p)
+    BaseAgent<UndirectedSector, Policy>(p)
     {}
 
 template <typename Policy>
 UndirectedAgent<Policy>::UndirectedAgent(double vision_range, double vision_angle):
-    BaseAgent<UndirectedObs, Policy>(vision_range, vision_angle)
+    BaseAgent<UndirectedSector, Policy>(vision_range, vision_angle)
     {}
 
 template <typename Policy>
 UndirectedAgent<Policy>::UndirectedAgent(std::size_t sector_num, std::size_t state_per_sector, double vision_range, double vision_angle):
-    BaseAgent<UndirectedObs, Policy>(sector_num, state_per_sector,vision_range,vision_angle)
+    BaseAgent<UndirectedSector, Policy>(sector_num, state_per_sector,vision_range,vision_angle)
+    {}
+
+template <typename Policy>
+UndirectedAgent<Policy>::UndirectedAgent(std::size_t sector_num, std::vector<size_t> states_per_sector, double vision_range, double vision_angle):
+    BaseAgent<UndirectedSector, Policy>(sector_num, states_per_sector,vision_range,vision_angle)
     {}
 
 template <typename Policy>
 UndirectedAgent<Policy>::UndirectedAgent(UndirectedAgent &&a):
-    BaseAgent<UndirectedObs, Policy>(std::move(a))
+    BaseAgent<UndirectedSector, Policy>(std::move(a))
     {}
     
-
 template <typename Policy>
 std::pair<bool, Angle> UndirectedAgent<Policy>::out_of_scope(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha){
 
@@ -80,10 +85,10 @@ int UndirectedAgent<Policy>::obs_foe(const Bird &me, const Bird &b, const double
 
     for(std::size_t i=1; i<=sectors_num; ++i){
         if(info.second.get() < this->_vision_sectors[i]){
-            if(this->_o.get_sector(i-1).get_bird_in_scope() == Bird_in_scope::foe){ //If we already have a foe in the sector
+            if(this->_o.get_sector(i-1) == UndirectedSector::foe){ //If we already have a foe in the sector
                 return 0;
             } else {
-                this->_o.set_sector(i-1,UndirectedObs(Bird_in_scope::foe));
+                this->_o.set_sector(i-1,UndirectedSector::foe);
                 return 1; //This is to update the count of birds that we've found
             }
         }
@@ -102,12 +107,12 @@ int UndirectedAgent<Policy>::obs_brother(const Bird &me, const Bird &b, const do
 
     for(std::size_t i=1; i<sectors_num; ++i){
         if(info.second.get() < this->_vision_sectors[i]){
-            if(this->_o.get_sector(i-1).get_bird_in_scope() == Bird_in_scope::none){ //If the sector is empty fill it up
-                this->_o.set_sector(i-1, UndirectedObs(Bird_in_scope::brother));
+            if(this->_o.get_sector(i-1) == UndirectedSector::none){ //If the sector is empty fill it up
+                this->_o.set_sector(i-1, UndirectedSector::brother);
                 return 1;
             } 
-            else if(setting == Obs_setting::both && this->_o.get_sector(i-1).get_bird_in_scope() == Bird_in_scope::foe){ //If the sector is non empty AND you have the state both pursuer and evader
-                this->_o.set_sector(i-1, UndirectedObs(Bird_in_scope::both));
+            else if(setting == Obs_setting::both && this->_o.get_sector(i-1) == UndirectedSector::foe){ //If the sector is non empty AND you have the state both pursuer and evader
+                this->_o.set_sector(i-1, UndirectedSector::both);
                 return 1;
             }
         }
@@ -117,7 +122,7 @@ int UndirectedAgent<Policy>::obs_brother(const Bird &me, const Bird &b, const do
 }
 
 template <typename Policy>
-Observable<UndirectedObs> UndirectedAgent<Policy>::obs(State &s, Obs_setting setting){
+Observable<UndirectedSector> UndirectedAgent<Policy>::obs(State &s, Obs_setting setting){
 
     std::size_t sectors_num = this->_o.get_sectors_num();
     std::size_t pursuers_num = s.get_pursuer_num();
@@ -134,7 +139,7 @@ Observable<UndirectedObs> UndirectedAgent<Policy>::obs(State &s, Obs_setting set
 
     //Reset observation
     for(std::size_t i=0; i<sectors_num; ++i)
-        this->_o.set_sector(i,UndirectedObs(Bird_in_scope::none));
+        this->_o.set_sector(i,UndirectedSector::none);
  
     if(me.get_species() == Species::pursuer){
         for(std::size_t i=pursuers_num; count<sectors_num && i<birds.size(); ++i) //The for loop stops if we occupy all the sectors

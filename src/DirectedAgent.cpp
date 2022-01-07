@@ -10,6 +10,6 @@ std::size_t inner_sum(const int_pair &a){
 }
 
 template<>
-void DirectedAgent<Boltzmann>::update_policy(double coeff, Observable<DirectedObs> &o, Action &a){
+void DirectedAgent<Boltzmann>::update_policy(double coeff, Observable<DirectedSector> &o, Action &a){
     _p->update(coeff, o, a);
 }

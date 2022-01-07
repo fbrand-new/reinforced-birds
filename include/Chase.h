@@ -20,7 +20,7 @@ Action Chase::decide(Observable<T> &o){
     std::size_t straight = sectors_num/2;
 
     for(std::size_t i=0; i<sectors_num; ++i){
-        if(o.get_sector(i)==Bird_in_scope::foe){
+        if(o.get_sector(i)==T::foe){
             if(i<straight)
                 return Action::right;
             else if(i==straight)

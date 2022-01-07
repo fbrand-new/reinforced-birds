@@ -39,6 +39,7 @@ class BaseAgent{
         BaseAgent(Policy &p);
         BaseAgent(double vision_range, double vision_angle);
         BaseAgent(std::size_t sector_num, std::size_t state_per_sector, double vision_range, double vision_angle);
+        BaseAgent(std::size_t sector_num, std::vector<std::size_t> states_per_sector, double vision_range, double vision_angle);
         BaseAgent(BaseAgent &&a) = default;
 
         //Getters
@@ -80,6 +81,15 @@ BaseAgent<T, Policy>::BaseAgent(std::size_t sector_num, std::size_t state_per_se
     {}
 
 template <typename T, typename Policy>
+BaseAgent<T, Policy>::BaseAgent(std::size_t sector_num, std::vector<size_t> states_per_sector, double vision_range, double vision_angle):
+    _o{sector_num, states_per_sector},
+    _vision_range{vision_range},
+    _vision_angle{vision_angle},
+    _vision_sectors{std::vector<double>(_o.get_sectors_num()+1)}
+    {}
+
+
+template <typename T, typename Policy>
 BaseAgent<T, Policy>::BaseAgent(Policy &p):
     _p{std::make_unique<Policy>(p)}
     {}
@@ -102,8 +112,9 @@ void BaseAgent<T, Policy>::set_vision_sectors(){
 template<typename T, typename Policy>
 void BaseAgent<T,Policy>::set_vision_sectors(std::vector<double> &vis_sectors){
     assert(vis_sectors.size() == _vision_sectors.size());
-    for(std::size_t k=1; k<_vision_sectors.size(); ++k)
-        _vision_sectors[k] = vis_sectors[k];
+    _vision_sectors = vis_sectors; //copy assignment for vectors should work just fine
+    // for(std::size_t k=0; k<_vision_sectors.size(); ++k)
+    //     _vision_sectors[k] = vis_sectors[k];
 }
 
 template <typename T, typename Policy>
