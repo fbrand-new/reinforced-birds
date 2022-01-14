@@ -16,7 +16,6 @@ class Angle{
 
     private:
         double _a;
-        //double _axis; //Identifies the cut axis: we compute the angle starting from _axis up to a full rotation
         void to_range();
         static void to_range(Angle &a);
 
@@ -37,6 +36,7 @@ class Angle{
         //Trigonometry
         static double cos(const Angle &a);
         static double sin(const Angle &a);
+        static Angle abs(const Angle &a);
 
         //Takes alpha in the range 0_2pi IFF alpha in (-2pi, 4pi). 
         //Range not checked to increase performances, careful
@@ -45,5 +45,7 @@ class Angle{
 };
 
 std::ostream& operator<<(std::ostream & s, const Angle &a);
+bool operator<(const Angle &a, const Angle &b);
+bool operator>(const Angle &a, const Angle &b);
 
 #endif

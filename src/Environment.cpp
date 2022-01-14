@@ -51,8 +51,10 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int 
 
     Reward r(s.size());
     bool episode_over = 0;
+    auto friends_range = 1.5;
 
-    auto predator = s.get_birds()[0];
+    auto birds = s.get_birds();
+    auto predator = birds[0];
 
     //By default, we get a negative reward to pursuer and a positive one to evader
     r[0] = -1;
@@ -61,7 +63,7 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int 
     }
 
     for(std::size_t i=1; i<s.size(); ++i){
-        if(relative_distance_squared(predator, s.get_birds()[i]) < _capture_range*_capture_range){
+        if(relative_distance_squared(predator, birds[i]) < _capture_range*_capture_range){
             r[0] = episode_length;
             r[i] = -episode_length;
             // r[0] = 2;
@@ -74,6 +76,14 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int 
         // } else{
         //     r[i] = 1./(num_of_preys);
         // }
+        } else {
+            for(std::size_t k=i+1; k<s.size(); ++k){
+                if(relative_distance_squared(birds[i],birds[k]) < friends_range*friends_range){
+                    r[i] = -1;
+                    r[k] = -1;
+                    break;
+                }
+            }
         }
     }
 

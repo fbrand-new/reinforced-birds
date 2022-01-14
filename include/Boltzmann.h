@@ -3,6 +3,7 @@
 
 #include "Observable.h"
 #include "Action.h"
+#include <list>
 
 class Boltzmann{
 
@@ -38,26 +39,32 @@ class Boltzmann{
 template <typename T>
 Action Boltzmann::decide(Observable<T> &o){
 
-    std::size_t row = o.index();
-    auto actions_pars = get_row(row);
+    // 10-1 we need to sum over all the rows now
+    // std::size_t row = o.index();
+    // auto actions_pars = get_row(row);
 
     std::vector<double> probabilities(this->_cols);
-    double mean=0;
+    // double mean=0;
     double den=0;
 
-    for(auto a:actions_pars){
-        mean+=a;
-    }
+    // for(auto a:actions_pars){
+    //     mean+=a;
+    // }
 
-    mean /= this->_cols;
+    // mean /= this->_cols;
 
     for(std::size_t i=0; i<this->_cols; ++i){
-        probabilities[i] = actions_pars[i] - mean;
-        den+=exp(probabilities[i]);
+        for(std::size_t r=0;r<this->_rows; ++r){
+            probabilities[i] += o[r]*get(r,i);
+        }
+        probabilities[i] = exp(probabilities[i]);
+        den += probabilities[i];
+        // probabilities[i] = actions_pars[i] - mean;
+        // den+=exp(probabilities[i]);
     }
-    
+
     for(std::size_t i=0; i<this->_cols; i++){
-        probabilities[i] = exp(probabilities[i])/den;
+        probabilities[i] /= den;
     }
 
     return sample_discrete(probabilities);
@@ -67,24 +74,34 @@ Action Boltzmann::decide(Observable<T> &o){
 template <typename T>
 void Boltzmann::update(double coeffs, Observable<T> &o, Action &a){
 
-    std::size_t row = o.index();
+    //std::size_t row = o.index();
+    std::list<std::size_t> rows; //The index to modify
+    for(std::size_t i=0; i<o.get_dim(); ++i){
+        if(o[i] != 0)
+            rows.emplace_back(i);
+    }
+        
     std::size_t col = static_cast<std::size_t>(a);
     
-    std::vector<double> probabilities(3);
-    double mean=0;
+    std::vector<double> probabilities(3,0);
+    // double mean=0;
 
-    for(std::size_t i=0; i<3; i++){
-        mean+=get(row,i);
-    }
-    mean /= 3;
+    // for(std::size_t i=0; i<3; i++){
+    //     mean+=get(row,i);
+    // }
+    // mean /= 3;
 
     double normalization = 0;
     for(std::size_t c=0; c<3; c++){
-        probabilities[c] = get(row,c) - mean;
-        normalization += exp(probabilities[c]);
+        for(auto &row:rows){
+            probabilities[c] += get(row,c);
+        }
+        // probabilities[c] = get(row,c) - mean;
+        probabilities[c] = exp(probabilities[c]);
+        normalization += probabilities[c];
     }
     
-    double policy_row_col = exp(probabilities[col])/normalization;
+    double policy = exp(probabilities[col])/normalization;
 
     //Euclidean gradient
     // for(std::size_t a=0; a<3; a++){
@@ -96,7 +113,8 @@ void Boltzmann::update(double coeffs, Observable<T> &o, Action &a){
     // }
 
     //Natural gradient
-    _params[row][col] = _params[row][col] + coeffs/(policy_row_col+0.001);
+    for(auto &row:rows)
+        _params[row][col] = _params[row][col] + coeffs/(policy+0.001);
     //_params(row, col) += coeffs/(policy_row_col+0.001);
 
 }

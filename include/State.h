@@ -38,4 +38,6 @@ class State{
 std::ofstream& operator <<(std::ofstream & os, State &s);
 std::ostream& operator <<(std::ostream & os, State &s);
 
+
+
 #endif
