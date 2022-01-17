@@ -5,6 +5,7 @@
 #include <cmath>
 #include "Rand.h"
 #include "Angle.h"
+#include <tuple>
 //This is an entity that the environment is made of. The state of the environemnt, IN OUR CASE, is a collection
 //of these entities
 
@@ -27,7 +28,7 @@ class Bird{
         Angle get_alpha() const noexcept { return _alpha; }
         Species get_species() const noexcept {return _species; }
 
-        void update(double velocity, Angle angle);
+        void update(const double velocity, const Angle angle, const double pbc);
         void reset(double x, double y, Angle alpha);
         void reset(double r, double theta);
         void set_species(Species spec) {_species = spec;}
@@ -35,8 +36,9 @@ class Bird{
         static Bird random_bird(double r, double theta);
 };
 
-double relative_distance_squared(const Bird &a, const Bird &b);
-Angle relative_angle(const Bird &a, const Bird &b, const double sin_alpha, const double cos_alpha);                
+double relative_distance_squared(const Bird &a, const Bird &b, const double pbc);
+Angle relative_angle(const Bird &a, const Bird &b, const double sin_alpha, const double cos_alpha, const double pbc);                
+std::pair<double,double> relative_coordinate(const Bird &a, const Bird &b, const double pbc);
 
 
 #endif

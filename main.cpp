@@ -90,12 +90,12 @@ int main(){
 
     //Initialization of environment and agents
 
-    Environment env(num_of_birds, v0_pursuer, v0_evader, capture_range, steering_angle_pursuer, steering_angle_evader);
+    Environment env(num_of_birds, v0_pursuer, v0_evader, capture_range, steering_angle_pursuer, steering_angle_evader,pbc);
     std::vector<Agt> agents;
-    agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians, pursuer_parallels,0)));
+    agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians, pursuer_parallels,0,pbc)));
 
     for(std::size_t i=1; i < num_of_birds; ++i){
-        agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(evader_meridians, evader_parallels,i)));
+        agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(evader_meridians, evader_parallels,i,pbc)));
     }
 
     //Bunch of pointers to keep track of values during the run and avoiding hard copying

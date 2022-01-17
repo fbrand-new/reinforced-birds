@@ -13,11 +13,21 @@ Bird::Bird(double x, double y, double alpha, Species spec):
     _species{spec}
     {}
 
-void Bird::update(double velocity, Angle angle){
+void Bird::update(const double velocity, const Angle angle, const double pbc){
         
     this->_alpha = (this->_alpha + angle);
     this->_x = this->_x + velocity*Angle::cos(this->_alpha);
     this->_y = this->_y + velocity*Angle::sin(this->_alpha);
+    
+    if(this->_x < -pbc)
+        this->_x += 2*pbc;
+    else if(this->_x > pbc)
+        this->_x -= 2*pbc;
+    
+    if(this->_y < -pbc)
+        this->_y += 2*pbc;
+    else if(this->_y > pbc)
+        this->_y -= 2*pbc;
 }
 
 void Bird::reset(double x, double y, Angle alpha){
@@ -44,21 +54,51 @@ Bird Bird::random_bird(double r, double theta){
     return Bird(x, y, alpha, Species::evader);
 }
 
-Angle relative_angle(const Bird &a, const Bird &b, const double sin_alpha, const double cos_alpha){
+Angle relative_angle(const Bird &a, const Bird &b, const double sin_alpha, const double cos_alpha, const double pbc){
 
-    double rel_x = b.get_x() - a.get_x();
-    double rel_y = b.get_y() - a.get_y();
+    double x;
+    double y;
 
-    double x_prime = cos_alpha*rel_x - sin_alpha*rel_y;
-    double y_prime = sin_alpha*rel_x + cos_alpha*rel_y;
+    std::tie(x,y) = relative_coordinate(a,b,pbc);
+
+    double x_prime = cos_alpha*x - sin_alpha*y;
+    double y_prime = sin_alpha*x + cos_alpha*y;
 
     return atan2(y_prime, x_prime);
 }
 
-double relative_distance_squared(const Bird &a, const Bird &b){
+double relative_distance_squared(const Bird &a, const Bird &b, const double pbc){
 
-    auto x = a.get_x() - b.get_x();
-    auto y = a.get_y() - b.get_y();
+    //17-1: Update for periodic boundary conditions consistency
+    // auto x = b.get_x() - a.get_x();
+    // if(abs(x) > pbc)
+    //     x += 2*pbc;
+
+    // auto y = b.get_y() - a.get_y();
+    // if(abs(y) > pbc)
+    //     y += 2*pbc;
+    double x;
+    double y;
+
+    std::tie(x,y) = relative_coordinate(a,b,pbc);
+
     return x*x + y*y;
-    
+}
+
+std::pair<double,double> relative_coordinate(const Bird &a, const Bird &b, const double pbc){
+    auto x = b.get_x() - a.get_x();
+
+    //If b is on the right side, project left and viceversa
+    if(x > pbc)
+        x -= 2*pbc;
+    else if(x < -pbc)
+        x += 2*pbc;
+
+    auto y = b.get_y() - a.get_y();
+    if(y > pbc)
+        y -= 2*pbc;
+    else if(y < -pbc)
+        y += 2*pbc;
+
+    return std::make_pair(x,y);
 }

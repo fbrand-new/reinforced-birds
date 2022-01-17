@@ -20,11 +20,12 @@ class TilingObserver{
         double _vision_range;
         std::size_t _tiles_num;
         std::size_t _me_id;
+        double _pbc; //Has to be the same as in environment
         std::tuple<bool,double,Angle> single_obs(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha);
 
     public:
         TilingObserver();
-        TilingObserver(std::vector<Angle> meridians, std::vector<double> parallels, std::size_t me_id);
+        TilingObserver(std::vector<Angle> meridians, std::vector<double> parallels, std::size_t me_id, double pbc);
         Observable<bool> obs(State &s);
 
 };

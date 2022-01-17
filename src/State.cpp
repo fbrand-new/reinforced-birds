@@ -1,8 +1,9 @@
 #include "State.h"
 
-State::State(unsigned int i):
+State::State(std::size_t i, double pbc):
     _birds(i, Bird::random_bird(10,0)),
-    _pursuers_num{1}
+    _pursuers_num{1},
+    _pbc{pbc}
     {
         _birds[0].reset(0,0,rand_a());
         _birds[0].set_species(Species::pursuer);
@@ -10,7 +11,7 @@ State::State(unsigned int i):
 
 void State::update(double velocity, double angle, unsigned int i){
 
-    _birds[i].update(velocity, angle);
+    _birds[i].update(velocity, angle, _pbc);
 
 }
 

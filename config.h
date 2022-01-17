@@ -6,8 +6,9 @@ constexpr auto states_per_sector = 2;
 //Environment params
 constexpr double steering_angle_pursuer = M_PI/12;
 constexpr double steering_angle_evader = M_PI/10; 
-constexpr double v0_pursuer = 0.5; //v0_pursuer > v0_evader otherwise evader learns linear escape and it's game over
-constexpr double v0_evader = 0.45;
+constexpr double v0_pursuer = 0.25; //v0_pursuer > v0_evader otherwise evader learns linear escape and it's game over
+constexpr double v0_evader = 0.25;
+constexpr double pbc = 10;
 // constexpr double vision_range_pursuer = 50;
 // constexpr double vision_range_evader = 10;
 // constexpr double vision_angle_pursuer = M_PI;
@@ -20,10 +21,9 @@ constexpr double capture_range = 0.5;
 
 //Decide the number of birds. 
 //The first one is the pursuer, the other are agents
-std::size_t num_of_birds = 5;
+std::size_t num_of_birds = 10;
 
-
-//Learning ratesl
+//Learning rates
 double alpha_w = 0.01;
 double alpha_t = 0.001;
 
@@ -33,10 +33,10 @@ std::size_t episode_length = 500;
 
 //Set the vision_sector for preys
 const std::vector<Angle> evader_meridians{-3.*M_PI/4, -M_PI/6, M_PI/6, 3.*M_PI/4};
-const std::vector<double> evader_parallels{5,10}; //This is really just the vision range
+const std::vector<double> evader_parallels{3,6}; //This is really just the vision range
 
 const std::vector<Angle> pursuer_meridians{-M_PI/2, -M_PI/6, M_PI/6, M_PI/2};
-const std::vector<double> pursuer_parallels{10,20}; //This is really just the vision range
+const std::vector<double> pursuer_parallels{4,8}; //This is really just the vision range
 
 //This can be modified: change setting to another possible Obs_setting
 //(foe_only, overwrite, both, closer)

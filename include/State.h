@@ -14,15 +14,18 @@ class State{
     private:
         std::vector<Bird> _birds;
         std::size_t _pursuers_num;
+        double _pbc; //Periodic boundary conditions are the same for x and y
         
     public:
 
         //Ctors
-        State(unsigned int is);
+        //State(std::size_t i);
+        State(std::size_t i, double pbc);
 
         //Getters
         auto & get_birds() const {return _birds;}
         std::size_t get_pursuer_num() const {return _pursuers_num;}
+        auto & get_pbc() const {return _pbc;}
 
         auto size() const {return _birds.size();}
         void update(double velocity, double angle, unsigned int i);

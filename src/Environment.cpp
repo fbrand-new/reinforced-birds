@@ -1,21 +1,21 @@
 #include "Environment.h"
 
-Environment::Environment(std::size_t birds_num):
-    _state(birds_num),
-    _v0(birds_num,0.1),
-    _capture_range{0.1},
-    _steering_angles(birds_num,M_PI/6)
-    {}
+// Environment::Environment(std::size_t birds_num):
+//     _state(birds_num),
+//     _v0(birds_num,0.1),
+//     _capture_range{0.1},
+//     _steering_angles(birds_num,M_PI/6)
+//     {}
 
-Environment::Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle):
-    _state(birds_num),
-    _v0(birds_num,v0),
-    _capture_range{capture_range},
-    _steering_angles(birds_num,steering_angle)
-    {}
+// Environment::Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle):
+//     _state(birds_num),
+//     _v0(birds_num,v0),
+//     _capture_range{capture_range},
+//     _steering_angles(birds_num,steering_angle)
+//     {}
 
-Environment::Environment(std::size_t birds_num, double v_pursuer, double v_evader, double capture_range, double steering_angle_pursuer, double steering_angle_evader):
-    _state(birds_num),
+Environment::Environment(std::size_t birds_num, double v_pursuer, double v_evader, double capture_range, double steering_angle_pursuer, double steering_angle_evader, double pbc):
+    _state(birds_num, pbc),
     _v0(birds_num,v_evader),
     _capture_range{capture_range},
     _steering_angles(birds_num,steering_angle_evader)
@@ -51,10 +51,11 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int 
 
     Reward r(s.size());
     bool episode_over = 0;
-    auto friends_range = 1.5;
+    auto friends_range = 0.5;
 
     auto birds = s.get_birds();
     auto predator = birds[0];
+    auto pbc = s.get_pbc();
 
     //By default, we get a negative reward to pursuer and a positive one to evader
     r[0] = -1;
@@ -63,7 +64,7 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int 
     }
 
     for(std::size_t i=1; i<s.size(); ++i){
-        if(relative_distance_squared(predator, birds[i]) < _capture_range*_capture_range){
+        if(relative_distance_squared(predator, birds[i],pbc) < _capture_range*_capture_range){
             r[0] = episode_length;
             r[i] = -episode_length;
             // r[0] = 2;
@@ -78,7 +79,7 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int 
         // }
         } else {
             for(std::size_t k=i+1; k<s.size(); ++k){
-                if(relative_distance_squared(birds[i],birds[k]) < friends_range*friends_range){
+                if(relative_distance_squared(birds[i],birds[k],pbc) < friends_range*friends_range){
                     r[i] = -1;
                     r[k] = -1;
                     break;

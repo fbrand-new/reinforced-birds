@@ -23,9 +23,9 @@ class Environment
     public:
 
         //Constructors
-        Environment(std::size_t birds_num);
-        Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle);
-        Environment(std::size_t birds_num, double v_pursuer, double v_evader, double capture_range, double steering_angle_pursuer, double steering_angle_evader);
+        // Environment(std::size_t birds_num);
+        // Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle);
+        Environment(std::size_t birds_num, double v_pursuer, double v_evader, double capture_range, double steering_angle_pursuer, double steering_angle_evader, double pbc);
 
         //p(s'|a,s): One step dynamics. We are going to suppose to be in a deterministic settings, so s' = f(a,s)
         State dynamics(std::vector<Action> a, State& s);

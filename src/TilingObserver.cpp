@@ -7,21 +7,22 @@ TilingObserver::TilingObserver():
     _tiles_num{(_meridians.size()-1)*_parallels.size()}
     {}
 
-TilingObserver::TilingObserver(std::vector<Angle> meridians, std::vector<double> parallels, std::size_t me_id):
+TilingObserver::TilingObserver(std::vector<Angle> meridians, std::vector<double> parallels, std::size_t me_id, double pbc):
     _meridians{meridians},
     _parallels{parallels},
     _vision_range{_parallels[_parallels.size()-1]},
     _tiles_num{(_meridians.size()-1)*_parallels.size()},
-    _me_id{me_id}
+    _me_id{me_id},
+    _pbc{pbc}
     {}
 
 std::tuple<bool,double,Angle> TilingObserver::single_obs(const Bird &me, const Bird &b, const double sin_alpha, const double cos_alpha){
 
-    auto R = relative_distance_squared(me,b);
+    auto R = relative_distance_squared(me,b,_pbc);
     if (R > this->_vision_range*this->_vision_range)
         return std::make_tuple(1,0,Angle()); //Since we are out of scope, Angles and radius are just placeholders
     
-    auto rel_angle = relative_angle(me, b, sin_alpha, cos_alpha);
+    auto rel_angle = relative_angle(me, b, sin_alpha, cos_alpha,_pbc);
   
     if(rel_angle < this->_meridians[0] || rel_angle > this->_meridians[_meridians.size()-1])
         return std::make_tuple(1,0,Angle()); //Since we are out of scope, Angles are just placeholders
