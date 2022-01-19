@@ -42,6 +42,7 @@
 #include <memory>
 #include <algorithm>
 #include <random>
+#include <omp.h>
 
 #include "config.h"
 
@@ -208,8 +209,14 @@ int main(){
             }
             next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
             
-            for(std::size_t i=0; i<agents.size(); ++i)
-                next_obs[i] = std::make_shared<Obs>(agents[i].obs(*next_state));
+            #ifndef _OPENMP
+                for(std::size_t i=0; i<agents.size(); ++i)
+                    next_obs[i] = std::make_shared<Obs>(agents[i].obs(*next_state));
+            #else
+                #pragma omp parallel for
+                for(std::size_t i=0; i<agents.size(); ++i)
+                    next_obs[i] = std::make_shared<Obs>(agents[i].obs(*next_state));
+            #endif
   
             //r contains the reward for all the agents on its first components 
             //and a boolean variable stating if the episode is finished or not in its second component

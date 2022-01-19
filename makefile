@@ -1,18 +1,26 @@
 EXE = main.x
+PARALLEL_EXE = parallel_main.x
 CXX = g++
 #CXXFLAGS = -I include -std=c++17 -Wall -g -I .
 CXXFLAGS = -I include -std=c++17 -Wall -O3 -I .
+#CXXFLAGS = -I include -fopenmp -std=c++17 -Wall -O3 -I . 
+ 
 OBJECTS = src/TilingObserver.o src/Environment.o \
 		src/Action.o src/Angle.o src/Agent.o \
 		src/RandomWalk.o src/Observable.o src/State.o src/Bird.o src/V.o src/Boltzmann.o \
 		src/Chase.o src/Signal.o src/Timer.o src/Rand.o
 
-all: $(EXE)
+serial: $(EXE) 
+parallel: $(PARALLEL_EXE)
 
 %.o: %.cpp
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
+
 $(EXE): main.o $(OBJECTS)
-	$(CXX) $^ -o $(EXE)
+	$(CXX) $^ -o $(EXE) 
+$(PARALLEL_EXE): main.o $(OBJECTS)
+	$(CXX) $^ -o $(EXE) -fopenmp
+
 
 main.o: $(OBJECTS) config.h
 

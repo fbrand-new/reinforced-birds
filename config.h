@@ -21,14 +21,14 @@ constexpr double capture_range = 0.5;
 
 //Decide the number of birds. 
 //The first one is the pursuer, the other are agents
-std::size_t num_of_birds = 10;
+std::size_t num_of_birds = 100;
 
 //Learning rates
 double alpha_w = 0.01;
 double alpha_t = 0.001;
 
 //Decide the episode length
-std::size_t episodes_num = 100000;
+std::size_t episodes_num = 1000;
 std::size_t episode_length = 500;
 
 //Set the vision_sector for preys
