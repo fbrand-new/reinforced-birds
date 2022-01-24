@@ -2,11 +2,11 @@ EXE = main.x
 PARALLEL_EXE = parallel_main.x
 CXX = g++
 #CXXFLAGS = -I include -std=c++17 -Wall -g -I .
-CXXFLAGS = -I include -std=c++17 -Wall -O3 -I .
-#CXXFLAGS = -I include -fopenmp -std=c++17 -Wall -O3 -I . 
+#CXXFLAGS = -I include -std=c++17 -Wall -O3 -I .
+CXXFLAGS = -I include -fopenmp -std=c++17 -Wall -O3 -I . 
  
-OBJECTS = src/TilingObserver.o src/Environment.o \
-		src/Action.o src/Angle.o src/Agent.o \
+OBJECTS = src/TilingObserver.o src/ClosestObserver.o src/Environment.o \
+		src/ClosestObsDirected.o src/Action.o src/Angle.o src/Agent.o \
 		src/RandomWalk.o src/Observable.o src/State.o src/Bird.o src/V.o src/Boltzmann.o \
 		src/Chase.o src/Signal.o src/Timer.o src/Rand.o
 
@@ -27,7 +27,10 @@ main.o: $(OBJECTS) config.h
 src/Rand.o: include/Rand.h
 #src/DirectedAgent.o: include/DirectedAgent.h include/BaseAgent.h 
 #src/UndirectedAgent.o: include/UndirectedAgent.h include/BaseAgent.h include/Bird.h
+src/ClosestObsDirected.o: include/ClosestObsDirected.h
+src/SectorsObserver.o: include/SectorsObserver.h
 src/TilingObserver.o: include/TilingObserver.h
+src/ClosestObserver.o: include/ClosestObserver.h
 src/Agent.o: include/Agent.h
 src/Environment.o: include/Environment.h include/Agent.h
 src/RandomWalk.o: include/RandomWalk.h

@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -p serial # queue
+#SBATCH -p long # queue
 #SBATCH -N 1 # n nodes
-#SBATCH -n 1 # n cores
-#SBATCH -o out.txt # STDOUT
-#SBATCH -J firstTry
+#SBATCH -n 20 # n cores
+#SBATCH -o birds.txt # STDOUT
+#SBATCH -J NACBirds
 #SBATCH -v
 
 dt=$(date +"%H:%M:%S - %d/%m/%y")

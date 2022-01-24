@@ -11,6 +11,7 @@ class Observable{
     private:
         std::vector<T> _o; 
         std::size_t _d; //Dimension of the observable space
+        std::size_t _index; //TODO: probably set me in the constructor
 
     public:
         // Observable():
@@ -20,7 +21,14 @@ class Observable{
 
         Observable(std::size_t size):
             _o{std::vector<T>(size)},
-            _d{size}
+            _d{size},
+            _index{0}
+            {}
+
+        Observable(std::size_t size, std::size_t index):
+            _o{std::vector<T>(size)},
+            _d{size},
+            _index{index}
             {}
 
         //Getter
@@ -28,15 +36,29 @@ class Observable{
         std::size_t get_dim() {return _d;}
         T operator[](std::size_t i) {return _o[i];}
         const T operator[](std::size_t i) const noexcept {return _o[i];}
+        auto& index() const {return _index;}
         //auto& get_sector(std::size_t i) { return _o[i];}
 
         
         //Setters
-        void set(std::size_t i, T s) {_o[i] = s;}
+        void set(std::size_t i, T s);
+        void set_index(std::size_t idx) {_index=idx;}
         // std::size_t index();
 
         //bool is_sector_empty(std::size_t i);
 };
+
+// template<typename T>
+// void Observable<T>::set(std::size_t i, T s){
+//     _o[i] = s;
+//     //set_index();
+// }
+
+// template<typename T>
+// void Observable<T>::set_index(){
+
+// }
+
 
 template <typename T, typename S>
 S& operator <<(S & os, Observable<T> &o){

@@ -35,6 +35,8 @@
 #include "Chase.h"
 #include "Agent.h"
 #include "TilingObserver.h"
+#include "ClosestObserver.h"
+#include "ClosestObsDirected.h"
 #include <tuple>
 #include <utility>
 #include <string>
@@ -47,7 +49,8 @@
 #include "config.h"
 
 using Obs = Observable<bool>;
-using Observer = TilingObserver;
+//using Observer = TilingObserver;
+using Observer = ClosestObsDirected;
 using Agt = Agent<Observer,Boltzmann,bool>;
 
 
@@ -57,7 +60,12 @@ int main(){
     //and included before the main function
     //Decide the number of vision sectors each agent observes
     const std::size_t sectors_num = (evader_meridians.size()-1)*evader_parallels.size();
-    const auto state_space_dim = sectors_num*states_per_sector+1;
+    
+    //Linear approx
+    // const auto state_space_dim = sectors_num*states_per_sector+1;
+    //Non linear approx
+    //const std::size_t pursuer_state_space_dim = sectors_num+1;
+    const std::size_t state_space_dim = (2*sectors_num+1)*(2*sectors_num+1);
 
     //Instantiate a learning signal to alternate between preys and predator learning
     
@@ -93,7 +101,8 @@ int main(){
 
     Environment env(num_of_birds, v0_pursuer, v0_evader, capture_range, steering_angle_pursuer, steering_angle_evader,pbc);
     std::vector<Agt> agents;
-    agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians, pursuer_parallels,0,pbc)));
+    agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_parallels,0,pbc)));
+    //agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_vis_range,sectors_num,0,pbc)));
 
     for(std::size_t i=1; i < num_of_birds; ++i){
         agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(evader_meridians, evader_parallels,i,pbc)));
@@ -227,10 +236,13 @@ int main(){
                 for(std::size_t i=0; i<num_of_birds; ++i){
                     //10-1 now we need the trace of the value vector to get td-error. 
                     //We also need to update every feature that is actually present
-                    //delta[i] = std::get<0>(r)[i] - v[i][*prev_obs[i]];
-                    delta[i] = std::get<0>(r)[i] - scalar(v[i],*prev_obs[i]);
-                    for(std::size_t s=0; s<state_space_dim; ++s)
-                        v[i][s] += alpha_w*delta[i]*((*prev_obs[i])[s]); //V values update
+                    
+                    // 19-1: we go back to full non-linear basis of functions
+                    delta[i] = std::get<0>(r)[i] - v[i][*prev_obs[i]];
+                    v[i][*prev_obs[i]] += alpha_w*delta[i];
+                    // delta[i] = std::get<0>(r)[i] - scalar(v[i],*prev_obs[i]);
+                    // for(std::size_t s=0; s<state_space_dim; ++s)
+                    //     v[i][s] += alpha_w*delta[i]*((*prev_obs[i])[s]); //V values update
                 }   
                 //Theta values update
                 for(std::size_t i=0;i<num_of_birds;++i)
@@ -245,9 +257,14 @@ int main(){
             }
             
             for(std::size_t i=0; i<num_of_birds; ++i){
-                delta[i] = std::get<0>(r)[i] + scalar(v[i], *next_obs[i]) - scalar(v[i],*prev_obs[i]);
-                for(std::size_t s=0; s<state_space_dim; ++s)
-                    v[i][s] += (*prev_obs[i])[s]*alpha_w*delta[i]; //V values update
+                
+                // 19-1: we go back to full non-linear basis of functions
+                delta[i] = std::get<0>(r)[i] + v[i][*next_obs[i]] - v[i][*prev_obs[i]];
+                v[i][*prev_obs[i]] += alpha_w*delta[i];
+                
+                // delta[i] = std::get<0>(r)[i] + scalar(v[i], *next_obs[i]) - scalar(v[i],*prev_obs[i]);
+                // for(std::size_t s=0; s<state_space_dim; ++s)
+                //     v[i][s] += (*prev_obs[i])[s]*alpha_w*delta[i]; //V values update
             }     
          
             //Theta values updates

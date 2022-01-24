@@ -13,16 +13,16 @@ class V{
         V(std::size_t size);
         auto& get() const {return _w;}
         auto size() const {return _w.size();}
-        // 10-1 the following was ok only for "one-hot" observables, which we don't have anymore
-        // template <typename T>
-        // double& operator[](Observable<T> &o);
         double& operator[] (std::size_t i);
+        
+        template<typename T>
+        double& operator[] (const Observable<T> &o);
 };
 
-// template <typename T>
-// double& V::operator[](Observable<T> &o){
-//     return _w[o.index()];
-// }
+template <typename T>
+double& V::operator[](const Observable<T> &o){
+    return _w[o.index()];
+}
 
 // double trace(const std::vector<double> &a);
 // double trace(const V &v);
