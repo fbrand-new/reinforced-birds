@@ -65,7 +65,11 @@ int main(){
     // const auto state_space_dim = sectors_num*states_per_sector+1;
     //Non linear approx
     //const std::size_t pursuer_state_space_dim = sectors_num+1;
-    const std::size_t state_space_dim = (2*sectors_num+1)*(2*sectors_num+1);
+    //const std::size_t state_space_dim = (2*sectors_num+1)*(2*sectors_num+1);
+
+    //For each bird we consider, we have every possible sector 
+    //twice (ingoing and outgoing) and the "null" sector
+    const std::size_t state_space_dim = pow(2*sectors_num+1,1+neighbours);
 
     //Instantiate a learning signal to alternate between preys and predator learning
     
@@ -99,13 +103,13 @@ int main(){
 
     //Initialization of environment and agents
 
-    Environment env(num_of_birds, v0_pursuer, v0_evader, capture_range, steering_angle_pursuer, steering_angle_evader,pbc);
+    Environment env(num_of_birds, v0_pursuer, v0_evader, friends_range, capture_range, steering_angle_pursuer, steering_angle_evader,pbc);
     std::vector<Agt> agents;
-    agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_parallels,0,pbc)));
+    agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_parallels,0,neighbours,pbc)));
     //agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_vis_range,sectors_num,0,pbc)));
 
     for(std::size_t i=1; i < num_of_birds; ++i){
-        agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(evader_meridians, evader_parallels,i,pbc)));
+        agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(evader_meridians, evader_parallels,i,neighbours,pbc)));
     }
 
     //Bunch of pointers to keep track of values during the run and avoiding hard copying

@@ -3,12 +3,14 @@
 
 constexpr auto states_per_sector = 2;
 
+constexpr std::size_t neighbours = 3;
+
 //Environment params
 constexpr double steering_angle_pursuer = M_PI/12;
 constexpr double steering_angle_evader = M_PI/12; 
 //constexpr double steering_angle_evader = M_PI/14; 
 constexpr double v0_pursuer = 0.15; //v0_pursuer > v0_evader otherwise evader learns linear escape and it's game over
-// constexpr double v0_evader = 0.12;
+//constexpr double v0_evader = 0.10;
 constexpr double v0_evader = 0.15;
 
 constexpr double pbc = 10;
@@ -16,7 +18,8 @@ constexpr double pbc = 10;
 // constexpr double vision_range_evader = 10;
 // constexpr double vision_angle_pursuer = M_PI;
 // constexpr double vision_angle_evader = 3./2*M_PI;
-constexpr double capture_range = 0.5;
+constexpr double capture_range = 0.45;
+constexpr double friends_range = 0.5;
 //constexpr double gamma = 1; we are using an undiscounted version of the RL problem
 
 //Set this to 0 if we have undirected observations
@@ -24,19 +27,19 @@ constexpr double capture_range = 0.5;
 
 //Decide the number of birds. 
 //The first one is the pursuer, the other are agents
-std::size_t num_of_birds = 51;
+std::size_t num_of_birds = 11;
 
 //Learning rates
 double alpha_w = 0.01;
 double alpha_t = 0.001;
 
 //Decide the episode length
-std::size_t episodes_num = 100000;
+std::size_t episodes_num = 20000;
 std::size_t episode_length = 500;
 
 //Set the vision_sector for preys
 const std::vector<Angle> evader_meridians{-3.*M_PI/4, -M_PI/3, -M_PI/6, M_PI/6, M_PI/3, 3.*M_PI/4};
-const std::vector<double> evader_parallels{1.5,4}; //This is really just the vision range
+const std::vector<double> evader_parallels{0.5,1.5}; //This is really just the vision range
 //const double evader_vis_range{9};
 //const std::vector<double> evader_parallels{3}; //This is really just the vision range
 
