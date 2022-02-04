@@ -7,6 +7,7 @@
 #include "Reward.h"
 #include "Action.h"
 #include "Bird.h"
+#include <initializer_list>
 
 class Environment
 {
@@ -17,6 +18,9 @@ class Environment
         double _capture_range; 
         double _friends_range;
         std::vector<double> _steering_angles;
+        double _pbc;
+        double _pursuer_vis_range;
+        std::pair<Angle,Angle> _pursuer_vis_angle;
 
         //Update of single bird state
         void update(double velocity, double angle);
@@ -26,10 +30,12 @@ class Environment
         //Constructors
         // Environment(std::size_t birds_num);
         // Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle);
-        Environment(std::size_t birds_num, double v_pursuer, double v_evader, double friends_range, double capture_range, double steering_angle_pursuer, double steering_angle_evader, double pbc);
+        Environment(std::size_t birds_num, double v_pursuer, double v_evader, double friends_range, 
+                    double capture_range, double steering_angle_pursuer, double steering_angle_evader, 
+                    double pbc, double pursuer_vis_range, std::pair<Angle,Angle> pursuer_vis_angle);
 
         //p(s'|a,s): One step dynamics. We are going to suppose to be in a deterministic settings, so s' = f(a,s)
-        State dynamics(std::vector<Action> a, State& s);
+        State dynamics(std::vector<Action> a, State& s, std::mt19937 &rng);
         State random_evader(std::vector<Action> a, State& s);
         State& get_state(){return _state;}
 

@@ -6,3 +6,8 @@ policy.csv
 *.csv
 perf.data*
 videos
+runs
+data*
+plots
+videos*
+argo_data*

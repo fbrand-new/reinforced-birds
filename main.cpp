@@ -37,6 +37,7 @@
 #include "TilingObserver.h"
 #include "ClosestObserver.h"
 #include "ClosestObsDirected.h"
+#include "ClosestObsUndirected.h"
 #include <tuple>
 #include <utility>
 #include <string>
@@ -84,7 +85,7 @@ int main(){
     log_file.open("data/env_info.csv");
     log_file << "episodes_num,episodes_length,num_of_birds,state_space_dim,episode_write_step,sectors" << std::endl;
     log_file << episodes_num << "," << episode_length << "," << num_of_birds << "," << 
-             state_space_dim << "," << 1000 << "," << sectors_num  << std::endl;
+             state_space_dim << "," << step_write << "," << sectors_num  << std::endl;
 
     // std::ofstream sectors_file;
     // sectors_file.open("data/sectors_info.csv");
@@ -98,12 +99,15 @@ int main(){
     //Instantiation of the random number generator for the program
     std::random_device rd;
     std::mt19937 rng(rd());
+    
 
     //---------------------------------------------------------------------------------
 
     //Initialization of environment and agents
 
-    Environment env(num_of_birds, v0_pursuer, v0_evader, friends_range, capture_range, steering_angle_pursuer, steering_angle_evader,pbc);
+    Environment env(num_of_birds, v0_pursuer, v0_evader, friends_range, capture_range, 
+                    steering_angle_pursuer, steering_angle_evader, pbc, pursuer_parallels.back(),
+                    std::make_pair(pursuer_meridians.front(),pursuer_meridians.back()));
     std::vector<Agt> agents;
     agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_parallels,0,neighbours,pbc)));
     //agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_vis_range,sectors_num,0,pbc)));
@@ -129,7 +133,7 @@ int main(){
     std::list<std::vector<std::size_t>> t_ep;
     //This vector has 4 entries because it stores the value and the theta of the 3 actions for each state, for each episode
     std::vector<std::vector<double>> value_policy(4*num_of_birds, std::vector<double>(
-                                    std::max(state_space_dim,static_cast<std::size_t>(episodes_num*state_space_dim/1000))));
+                                    std::max(state_space_dim,static_cast<std::size_t>(episodes_num*state_space_dim/step_write))));
     
     //This stores the probability to be in each state at every moment for each bird
     std::vector<std::vector<double>> eta(state_space_dim, std::vector<double>(num_of_birds));
@@ -202,8 +206,8 @@ int main(){
 
         while(t < episode_length){
 
-            //Data logging every 1000th episode
-            if(ep%1000 == 0){
+            //Data logging every step_writeth episode
+            if(ep%step_write == 0){
                 traj.push_back(std::make_pair(ep,*prev_state));
                 for(std::size_t i = 0; i<num_of_birds; ++i)
                     record_obs.push_back(std::make_tuple(ep,i,*prev_obs[i]));
@@ -220,7 +224,7 @@ int main(){
             for(std::size_t i = 0; i < agents.size(); ++i){
                 a[i] = (agents[i].act(*prev_state, *prev_obs[i]));
             }
-            next_state = std::make_shared<State>(env.dynamics(a, *prev_state));
+            next_state = std::make_shared<State>(env.dynamics(a, *prev_state, rng));
             
             #ifndef _OPENMP
                 for(std::size_t i=0; i<agents.size(); ++i)
@@ -293,13 +297,13 @@ int main(){
         } //End of a time step of algorithm
 
         //Logging value and policy data
-        if(ep%1000 == 0){
+        if(ep%step_write == 0){
             for(std::size_t i=0; i < num_of_birds; ++i){
                 for(std::size_t k=0; k<state_space_dim; ++k){
-                    value_policy[i*4][static_cast<int>(ep/1000)*state_space_dim+k] = v[i][k];
-                    value_policy[i*4+1][static_cast<int>(ep/1000)*state_space_dim+k] = agents[i].get_policy()->get(k,0);
-                    value_policy[i*4+2][static_cast<int>(ep/1000)*state_space_dim+k] = agents[i].get_policy()->get(k,1);
-                    value_policy[i*4+3][static_cast<int>(ep/1000)*state_space_dim+k] = agents[i].get_policy()->get(k,2);
+                    value_policy[i*4][static_cast<int>(ep/step_write)*state_space_dim+k] = v[i][k];
+                    value_policy[i*4+1][static_cast<int>(ep/step_write)*state_space_dim+k] = agents[i].get_policy()->get(k,0);
+                    value_policy[i*4+2][static_cast<int>(ep/step_write)*state_space_dim+k] = agents[i].get_policy()->get(k,1);
+                    value_policy[i*4+3][static_cast<int>(ep/step_write)*state_space_dim+k] = agents[i].get_policy()->get(k,2);
                 }
             }
         } 
