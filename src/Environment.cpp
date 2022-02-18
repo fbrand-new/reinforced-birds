@@ -17,15 +17,17 @@
 Environment::Environment(std::size_t birds_num, double v_pursuer, double v_evader,
                          double friends_range, double capture_range, double steering_angle_pursuer, 
                          double steering_angle_evader, double pbc, double pursuer_vis_range,
-                         std::pair<Angle,Angle> pursuer_vis_angle):
-    _state(birds_num, pbc),
+                         std::pair<Angle,Angle> pursuer_vis_angle, double av_init_dist, double prey_repulsion):
+    _state(birds_num, pbc,av_init_dist),
     _v0(birds_num,v_evader),
     _friends_range{friends_range},
     _capture_range{capture_range},
     _steering_angles(birds_num,steering_angle_evader),
     _pbc{pbc},
     _pursuer_vis_range{pursuer_vis_range},
-    _pursuer_vis_angle{pursuer_vis_angle}
+    _pursuer_vis_angle{pursuer_vis_angle},
+    _prey_repulsion{prey_repulsion}
+    // _av_init_dist{av_init_dist}
     {
         _v0[0] = v_pursuer;
         _steering_angles[0] = steering_angle_pursuer;
@@ -138,8 +140,8 @@ std::pair<Reward,bool> Environment::reward(State &s, double episode_length, int 
         } else {
             for(std::size_t k=i+1; k<s.size(); ++k){
                 if(relative_distance_squared(birds[i],birds[k],pbc) < _friends_range*_friends_range){
-                    r[i] = -1;
-                    r[k] = -1;
+                    r[i] = -_prey_repulsion;
+                    r[k] = -_prey_repulsion;
                     break;
                 }
             }

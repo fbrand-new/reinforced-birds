@@ -15,12 +15,13 @@ class State{
         std::vector<Bird> _birds;
         std::size_t _pursuers_num;
         double _pbc; //Periodic boundary conditions are the same for x and y
+        double _av_dist;
         
     public:
 
         //Ctors
         //State(std::size_t i);
-        State(std::size_t i, double pbc);
+        State(std::size_t i, double pbc, double av_dist);
 
         //Getters
         auto & get_birds() const {return _birds;}
@@ -32,8 +33,8 @@ class State{
         void reset();
 
         //Utility function
-        static double rand_x();
-        static double rand_y();
+        // static double rand_x();
+        // static double rand_y();
         static double rand_a();
         //static Bird random_bird();
 };

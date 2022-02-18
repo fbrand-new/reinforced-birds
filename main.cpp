@@ -38,6 +38,9 @@
 #include "ClosestObserver.h"
 #include "ClosestObsDirected.h"
 #include "ClosestObsUndirected.h"
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
 #include <tuple>
 #include <utility>
 #include <string>
@@ -47,13 +50,8 @@
 #include <random>
 #include <omp.h>
 
+//Defining global variables and which Observers to use
 #include "config.h"
-
-using Obs = Observable<bool>;
-//using Observer = TilingObserver;
-using Observer = ClosestObsDirected;
-using Agt = Agent<Observer,Boltzmann,bool>;
-
 
 int main(){
 
@@ -62,6 +60,9 @@ int main(){
     //Decide the number of vision sectors each agent observes
     const std::size_t sectors_num = (evader_meridians.size()-1)*evader_parallels.size();
     
+    //Seeding an almost random seed. Good enough for our program and faster than std::random
+    srand(time(NULL));
+
     //Linear approx
     // const auto state_space_dim = sectors_num*states_per_sector+1;
     //Non linear approx
@@ -70,7 +71,7 @@ int main(){
 
     //For each bird we consider, we have every possible sector 
     //twice (ingoing and outgoing) and the "null" sector
-    const std::size_t state_space_dim = pow(2*sectors_num+1,1+neighbours);
+    const std::size_t state_space_dim = pow(2*sectors_num+1,1+std::max(evader_neighbours,pursuer_neighbours));
 
     //Instantiate a learning signal to alternate between preys and predator learning
     
@@ -93,10 +94,8 @@ int main(){
     //     sectors_file << "bot_angle_"+std::to_string(i)+","+"states_sector_"+std::to_string(i)+",";
     // sectors_file << "bot_angle_"+std::to_string(sectors_num-1)+","+"states_sector_"+std::to_string(sectors_num-1);
 
-
-    // Signal pred_training(learning_agent);
-
     //Instantiation of the random number generator for the program
+    //FIX: rng is actually unused in the current stage of the program
     std::random_device rd;
     std::mt19937 rng(rd());
     
@@ -107,13 +106,14 @@ int main(){
 
     Environment env(num_of_birds, v0_pursuer, v0_evader, friends_range, capture_range, 
                     steering_angle_pursuer, steering_angle_evader, pbc, pursuer_parallels.back(),
-                    std::make_pair(pursuer_meridians.front(),pursuer_meridians.back()));
+                    std::make_pair(pursuer_meridians.front(),pursuer_meridians.back()),
+                    av_dist,prey_repulsion);
     std::vector<Agt> agents;
-    agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_parallels,0,neighbours,pbc)));
+    agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_parallels,0,pursuer_neighbours,pbc)));
     //agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(pursuer_meridians,pursuer_vis_range,sectors_num,0,pbc)));
 
     for(std::size_t i=1; i < num_of_birds; ++i){
-        agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(evader_meridians, evader_parallels,i,neighbours,pbc)));
+        agents.push_back(Agt(Boltzmann(state_space_dim,3),Observer(evader_meridians, evader_parallels,i,evader_neighbours,pbc)));
     }
 
     //Bunch of pointers to keep track of values during the run and avoiding hard copying
@@ -198,6 +198,10 @@ int main(){
         prev_state = std::make_shared<State>(env.get_state());
 
         for(std::size_t i=0; i<agents.size(); ++i){
+            //TODO: modify the obs function. Add an inner state for agents
+            //That gets modified in the observation process.
+            //The memory should be inside agent's mind but the actual inner state
+            //has to be visible in the main.
             prev_obs[i] = std::make_shared<Obs>(agents[i].obs(*prev_state));
         }
         
@@ -222,6 +226,7 @@ int main(){
                 
             //All agents get an observation based on the current state and return an action
             for(std::size_t i = 0; i < agents.size(); ++i){
+                //TODO: action will also depend on the agent inner state
                 a[i] = (agents[i].act(*prev_state, *prev_obs[i]));
             }
             next_state = std::make_shared<State>(env.dynamics(a, *prev_state, rng));
@@ -246,6 +251,8 @@ int main(){
                     //We also need to update every feature that is actually present
                     
                     // 19-1: we go back to full non-linear basis of functions
+                    //TODO: we need 2*previous values, since we have a copy of it for each inner state.
+                    //and of course we need a way to access to it. std::pair?
                     delta[i] = std::get<0>(r)[i] - v[i][*prev_obs[i]];
                     v[i][*prev_obs[i]] += alpha_w*delta[i];
                     // delta[i] = std::get<0>(r)[i] - scalar(v[i],*prev_obs[i]);
@@ -254,6 +261,7 @@ int main(){
                 }   
                 //Theta values update
                 for(std::size_t i=0;i<num_of_birds;++i)
+                    //TODO: agents update policies based on their inner state also
                     agents[i].update_policy(alpha_t*delta[i], *prev_obs[i], a[i]);
                 // if(ag_l != 0){ //Evaders are learning
                 //     for(std::size_t j=1; j<num_of_birds; ++j)
