@@ -2,8 +2,8 @@
 
 using Obs = Observable<bool>;
 //using Observer = TilingObserver;
-//using Observer = ClosestObsDirected;
-using Observer = ClosestObsUndirected;
+using Observer = ClosestObsDirected;
+//using Observer = ClosestObsUndirected;
 using Agt = Agent<Observer,Boltzmann,bool>;
 
 //constexpr std::size_t neighbours = 3;
@@ -64,7 +64,7 @@ const std::vector<double> pursuer_parallels{12}; //This is really just the visio
 
 // const Obs_setting setting = Obs_setting::overwrite;
 // std::vector<std::size_t> states_per_sector = {2,3,3,3,2};
-constexpr int step_write = 500;
+constexpr int step_write = 2000;
 
 constexpr double av_dist = 7;
 constexpr double prey_repulsion = 0;
