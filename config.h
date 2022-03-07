@@ -2,8 +2,8 @@
 
 using Obs = Observable<bool>;
 //using Observer = TilingObserver;
-using Observer = ClosestObsDirected;
-//using Observer = ClosestObsUndirected;
+//using Observer = ClosestObsDirected;
+using Observer = ClosestObsUndirected;
 using Agt = Agent<Observer,Boltzmann,bool>;
 
 //constexpr std::size_t neighbours = 3;
@@ -22,21 +22,21 @@ constexpr double steering_angle_evader = M_PI/14;
 
 constexpr double v0_pursuer = 0.15;
 //constexpr double v0_pursuer = 0.12;
-constexpr double v0_evader = 0.12;
+constexpr double v0_evader = 0.15;
 
 constexpr double pbc = 100;
 constexpr double capture_range = 0.5;
 constexpr double friends_range = 0.5;
 
 //The first one is the pursuer, the other are agents
-std::size_t num_of_birds = 11;
+std::size_t num_of_birds = 3;
 
 //Learning rates
 double alpha_w = 0.01;
 double alpha_t = 0.001;
 
 //Decide the episode length
-std::size_t episodes_num = 50000;
+std::size_t episodes_num = 10000;
 std::size_t episode_length = 500;
 
 //Set the vision_sector for preys
@@ -67,4 +67,4 @@ const std::vector<double> pursuer_parallels{12}; //This is really just the visio
 constexpr int step_write = 2000;
 
 constexpr double av_dist = 7;
-constexpr double prey_repulsion = 0;
+constexpr double prey_repulsion = 1;

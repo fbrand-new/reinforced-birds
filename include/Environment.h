@@ -22,7 +22,6 @@ class Environment
         double _pursuer_vis_range;
         std::pair<Angle,Angle> _pursuer_vis_angle;
         double _prey_repulsion;
-        // double _av_init_dist;
 
         //Update of single bird state
         void update(double velocity, double angle);
@@ -30,8 +29,6 @@ class Environment
     public:
 
         //Constructors
-        // Environment(std::size_t birds_num);
-        // Environment(std::size_t birds_num, double v0, double capture_range, double steering_angle);
         Environment(std::size_t birds_num, double v_pursuer, double v_evader, double friends_range, 
                     double capture_range, double steering_angle_pursuer, double steering_angle_evader, 
                     double pbc, double pursuer_vis_range, std::pair<Angle,Angle> pursuer_vis_angle,
