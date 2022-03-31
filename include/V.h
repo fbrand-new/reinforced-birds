@@ -7,7 +7,6 @@ class V{
 
     private:
         std::vector<double> _w;
-        //Eigen::VectorXd _w;
 
     public:
         V(std::size_t size);
@@ -23,9 +22,6 @@ template <typename T>
 double& V::operator[](const Observable<T> &o){
     return _w[o.index()];
 }
-
-// double trace(const std::vector<double> &a);
-// double trace(const V &v);
 
 template<typename T>
 double scalar(V &v, Observable<T> &o){

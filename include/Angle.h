@@ -28,7 +28,6 @@ class Angle{
 
         //Getters
         const double get() const {return _a;}
-        //const double get_axis() const {return _axis;}
 
         //Setters
         void set(double a) {_a = a;}
@@ -37,11 +36,6 @@ class Angle{
         static double cos(const Angle &a);
         static double sin(const Angle &a);
         static Angle abs(const Angle &a);
-
-        //Takes alpha in the range 0_2pi IFF alpha in (-2pi, 4pi). 
-        //Range not checked to increase performances, careful
-        //static double to_0_2pi(double alpha); 
-        //static double to_
 };
 
 std::ostream& operator<<(std::ostream & s, const Angle &a);

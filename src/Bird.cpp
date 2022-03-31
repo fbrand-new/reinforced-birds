@@ -46,7 +46,6 @@ void Bird::reset(double r, double theta){
 
 Bird Bird::random_bird(double r, double theta){
 
-    //double theta = (double) rand()/RAND_MAX * 2 * M_PI; //Random theta in polar coordinates
     double x = ((double) rand()/RAND_MAX + r)*cos(theta);
     double y = ((double) rand()/RAND_MAX + r)*sin(theta);
     double alpha = Rand::theta_rand();
@@ -69,14 +68,6 @@ Angle relative_angle(const Bird &a, const Bird &b, const double sin_alpha, const
 
 double relative_distance_squared(const Bird &a, const Bird &b, const double pbc){
 
-    //17-1: Update for periodic boundary conditions consistency
-    // auto x = b.get_x() - a.get_x();
-    // if(abs(x) > pbc)
-    //     x += 2*pbc;
-
-    // auto y = b.get_y() - a.get_y();
-    // if(abs(y) > pbc)
-    //     y += 2*pbc;
     double x;
     double y;
 

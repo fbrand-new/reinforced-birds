@@ -5,13 +5,13 @@
 
 class Signal{
 
+    //Used to generate a time signal to alternate the learning process between preys and predator
+
     private:
         std::vector<std::size_t> _time_of_step;
 
     public:
         Signal(std::vector<std::size_t> t);
-        //Signal(std::vector<std::size_t> &&t);
-        //For now let's return a step function
         bool step(std::size_t t);
         std::size_t multistep(std::size_t t, std::size_t max_step);
 };

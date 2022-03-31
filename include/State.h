@@ -33,10 +33,7 @@ class State{
         void reset();
 
         //Utility function
-        // static double rand_x();
-        // static double rand_y();
         static double rand_a();
-        //static Bird random_bird();
 };
 
 std::ofstream& operator <<(std::ofstream & os, State &s);

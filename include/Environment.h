@@ -22,6 +22,8 @@ class Environment
         double _pursuer_vis_range;
         std::pair<Angle,Angle> _pursuer_vis_angle;
         double _prey_repulsion;
+        double _attraction_range;
+        double _attraction_reward;
 
         //Update of single bird state
         void update(double velocity, double angle);
@@ -32,10 +34,10 @@ class Environment
         Environment(std::size_t birds_num, double v_pursuer, double v_evader, double friends_range, 
                     double capture_range, double steering_angle_pursuer, double steering_angle_evader, 
                     double pbc, double pursuer_vis_range, std::pair<Angle,Angle> pursuer_vis_angle,
-                    double av_init_dist, double prey_repulsion);
+                    double av_init_dist, double prey_repulsion, double attraction_range, double attraction_reward);
 
         //p(s'|a,s): One step dynamics. We are going to suppose to be in a deterministic settings, so s' = f(a,s)
-        State dynamics(std::vector<Action> a, State& s, std::mt19937 &rng);
+        State dynamics(std::vector<Action> a, State& s);
         State random_evader(std::vector<Action> a, State& s);
         State& get_state(){return _state;}
 

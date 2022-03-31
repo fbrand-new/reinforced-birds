@@ -36,7 +36,7 @@ double alpha_w = 0.01;
 double alpha_t = 0.001;
 
 //Decide the episode length
-std::size_t episodes_num = 10000;
+std::size_t episodes_num = 500;
 std::size_t episode_length = 500;
 
 //Set the vision_sector for preys
@@ -68,3 +68,6 @@ constexpr int step_write = 2000;
 
 constexpr double av_dist = 7;
 constexpr double prey_repulsion = 1;
+
+constexpr double attraction_range = 12;
+constexpr double prey_attraction = 0;

@@ -6,7 +6,7 @@
 #include "Rand.h"
 #include "Angle.h"
 #include <tuple>
-//This is an entity that the environment is made of. The state of the environemnt, IN OUR CASE, is a collection
+//This is an entity that the environment is made of. The state of the environemnt, in our case, is a collection
 //of these entities
 
 enum class Species{pursuer, evader};

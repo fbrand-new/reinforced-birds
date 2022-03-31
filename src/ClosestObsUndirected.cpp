@@ -26,12 +26,6 @@ Observable<bool> ClosestObsUndirected::obs(const State &s){
     }
 
     std::multimap<double,std::size_t> neighbours_dist;
-    // std::vector<double> neighbours_evaders_dist(_neighbours,2*_pbc);
-    // std::vector<Angle> neighbours_evaders_angle(_neighbours,0);
-    // std::vector<std::size_t> neighbours_evaders_idx(_neighbours,0);
-    // auto farthest_neigh = neighbours_evaders_dist.back();
-    //auto closest_prey_angle = Angle();
-    //std::size_t closest_prey_idx = 0;
 
     for(std::size_t i=1; i<birds.size();++i){
         
@@ -72,8 +66,6 @@ Observable<bool> ClosestObsUndirected::obs(const State &s){
 
 
     //If i am not the pursuer, locate the pursuer if its in the vision sector
-    //We now only see the predator if it see farther than the farthest evader
-    //if(_me_id != 0 && farthest_ev > predator_dist){
     if(_me_id != 0){     
         for(std::size_t j=0; j <_parallels.size();++j){
             if(predator_dist < _parallels[j]*_parallels[j]){
